@@ -632,13 +632,163 @@ input[type="range"]:disabled {
   background-color: #95e495;
 }
 
-.race-cloud {
+/* Background elements */
+.background-element {
   position: absolute;
-  width: 80px;
-  height: 40px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 40px;
+  font-size: 1.8rem;
   z-index: 1;
+  transition: transform 0.3s ease-in-out;
+  opacity: 0.5;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  pointer-events: none; /* Don't interfere with clicks */
+}
+
+/* Trees are taller */
+.bg-tree {
+  font-size: 2.5rem;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+}
+
+/* Bushes are smaller */
+.bg-bush {
+  font-size: 1.7rem;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+}
+
+/* Flowers are colorful and small */
+.bg-flower {
+  font-size: 1.5rem;
+  animation: sway 5s ease-in-out infinite alternate;
+  filter: saturate(1.2);
+}
+
+/* Spectators move and react */
+.bg-spectator {
+  font-size: 1.6rem;
+  animation: cheer 3s ease-in-out infinite;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+/* Buildings and structures */
+.bg-structure {
+  font-size: 2.2rem;
+  transform-origin: bottom center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
+}
+
+/* Animals and wildlife */
+.bg-animal {
+  font-size: 1.4rem;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+/* Moving elements like birds and butterflies */
+.bg-moving {
+  z-index: 4;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
+}
+
+.bg-moving.butterfly {
+  font-size: 1.3rem;
+  animation: flutterfly 15s linear infinite;
+  transform-origin: center;
+}
+
+.bg-moving.bird {
+  font-size: 1.4rem;
+  animation: flybird 20s linear infinite;
+  transform-origin: center;
+}
+
+/* Misc background elements */
+.bg-misc {
+  z-index: 0;
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+/* Subtle animations for background elements */
+@keyframes sway {
+  0% { transform: rotate(-3deg); }
+  100% { transform: rotate(3deg); }
+}
+
+@keyframes cheer {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes flutterfly {
+  0% { 
+    transform: translate(0, 0) rotate(0deg) scale(1); 
+  }
+  25% { 
+    transform: translate(120px, 15px) rotate(10deg) scale(0.9); 
+  }
+  50% { 
+    transform: translate(240px, -10px) rotate(-5deg) scale(1.1); 
+  }
+  75% { 
+    transform: translate(120px, -25px) rotate(10deg) scale(0.9); 
+  }
+  100% { 
+    transform: translate(0, 0) rotate(0deg) scale(1); 
+  }
+}
+
+@keyframes flybird {
+  0% { 
+    transform: translate(0, 0) scale(1);
+  }
+  20% { 
+    transform: translate(100px, -20px) scale(0.95);
+  }
+  40% { 
+    transform: translate(200px, 10px) scale(0.9);
+  }
+  60% { 
+    transform: translate(300px, -15px) scale(0.85);
+  }
+  80% { 
+    transform: translate(400px, 5px) scale(0.8);
+  }
+  100% { 
+    transform: translate(500px, -10px) scale(0.75);
+    opacity: 0;
+  }
+}
+
+/* Race progress - elements react as cars approach */
+.race-lane:hover .background-element {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-out;
+}
+
+/* Specific interactions for different elements when cars pass by */
+.race-lane:hover .bg-flower {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.race-lane:hover .bg-spectator {
+  transform: scale(1.2);
+  animation: excitedCheer 0.5s ease-in-out;
+}
+
+.race-lane:hover .bg-animal {
+  transform: translateY(-5px);
+}
+
+@keyframes excitedCheer {
+  0%, 100% { transform: scale(1.2) rotate(0deg); }
+  25% { transform: scale(1.25) rotate(-5deg); }
+  75% { transform: scale(1.25) rotate(5deg); }
+}
+
+/* Remove the old cloud styling */
+.race-cloud {
+  display: none;
 }
 
 .running-dust {

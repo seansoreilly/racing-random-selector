@@ -214,8 +214,8 @@ document.addEventListener("DOMContentLoaded", () => {
       raceLanes.appendChild(lane);
     });
 
-    // Add some clouds
-    createClouds();
+    // Add background elements instead of clouds
+    createBackgroundElements();
 
     // Initial positioning of names and tethers
     updateTethersAndNames();
@@ -229,31 +229,162 @@ document.addEventListener("DOMContentLoaded", () => {
     return usableHeight / participantCount;
   }
 
-  // Create cloud elements
-  function createClouds() {
-    // Remove existing clouds
-    document.querySelectorAll(".race-cloud").forEach((cloud) => cloud.remove());
+  // Create background decorations
+  function createBackgroundElements() {
+    // Remove existing background elements
+    document
+      .querySelectorAll(".background-element")
+      .forEach((element) => element.remove());
 
-    // Create new clouds
-    for (let i = 0; i < 5; i++) {
-      const cloud = document.createElement("div");
-      cloud.className = "race-cloud";
+    // Create a diverse set of background elements
+    const decorationTypes = [
+      // Trees and plants
+      { class: "bg-tree", emoji: "🌳", count: 3, zIndex: 1 },
+      { class: "bg-tree", emoji: "🌲", count: 2, zIndex: 1 },
+      { class: "bg-tree", emoji: "🌴", count: 2, zIndex: 1 },
+      { class: "bg-tree", emoji: "🪴", count: 2, zIndex: 1 },
+      { class: "bg-bush", emoji: "🌿", count: 3, zIndex: 1 },
+      { class: "bg-bush", emoji: "🌵", count: 2, zIndex: 1 },
+      { class: "bg-bush", emoji: "☘️", count: 3, zIndex: 1 },
 
-      // Random positioning
-      cloud.style.top = `${
-        Math.random() * (raceTrackContainer.clientHeight - 60)
-      }px`;
-      cloud.style.left = `${
-        Math.random() * (raceTrackContainer.clientWidth - 120)
-      }px`;
+      // Flowers
+      { class: "bg-flower", emoji: "🌸", count: 2, zIndex: 1 },
+      { class: "bg-flower", emoji: "🌺", count: 2, zIndex: 1 },
+      { class: "bg-flower", emoji: "🌼", count: 2, zIndex: 1 },
+      { class: "bg-flower", emoji: "🌻", count: 2, zIndex: 1 },
+      { class: "bg-flower", emoji: "🌷", count: 3, zIndex: 1 },
 
-      // Add some size variation
-      const scale = 0.5 + Math.random() * 1;
-      cloud.style.transform = `scale(${scale})`;
+      // Buildings and structures
+      { class: "bg-structure", emoji: "🏠", count: 1, zIndex: 1 },
+      { class: "bg-structure", emoji: "🏡", count: 1, zIndex: 1 },
+      { class: "bg-structure", emoji: "⛱️", count: 2, zIndex: 1 },
+      { class: "bg-structure", emoji: "🚩", count: 3, zIndex: 2 },
+      { class: "bg-structure", emoji: "🏁", count: 2, zIndex: 2 },
 
-      // Add to container
-      raceTrackContainer.appendChild(cloud);
-    }
+      // Spectators and crowd elements
+      { class: "bg-spectator", emoji: "👨‍👩‍👧‍👦", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "👨‍👩‍👧", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "👩‍👦", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "👏", count: 3, zIndex: 2 },
+      { class: "bg-spectator", emoji: "🙌", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "🎉", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "📸", count: 2, zIndex: 2 },
+      { class: "bg-spectator", emoji: "📱", count: 2, zIndex: 2 },
+
+      // Animals and wildlife
+      { class: "bg-animal", emoji: "🦆", count: 2, zIndex: 3 },
+      { class: "bg-animal", emoji: "🦅", count: 1, zIndex: 3 },
+      { class: "bg-animal", emoji: "🦋", count: 3, zIndex: 3 },
+      { class: "bg-animal", emoji: "🐿️", count: 2, zIndex: 3 },
+
+      // Misc environment elements
+      { class: "bg-misc", emoji: "⛅", count: 2, zIndex: 0 },
+      { class: "bg-misc", emoji: "☁️", count: 2, zIndex: 0 },
+      { class: "bg-misc", emoji: "🪨", count: 3, zIndex: 1 },
+    ];
+
+    // Define different regions for placement
+    const regions = [
+      {
+        name: "sky",
+        top: 5,
+        bottom: 100,
+        left: 0,
+        right: 100,
+        elements: ["bg-misc"],
+      },
+      {
+        name: "background",
+        top: 30,
+        bottom: 180,
+        left: 0,
+        right: 100,
+        elements: ["bg-tree", "bg-structure"],
+      },
+      {
+        name: "midground",
+        top: 80,
+        bottom: 300,
+        left: 20,
+        right: 80,
+        elements: ["bg-bush", "bg-flower", "bg-animal"],
+      },
+      {
+        name: "foreground",
+        top: 150,
+        bottom: 450,
+        left: 30,
+        right: 90,
+        elements: ["bg-spectator", "bg-animal"],
+      },
+    ];
+
+    decorationTypes.forEach((type) => {
+      // Find the appropriate regions for this element type
+      const validRegions = regions.filter((region) =>
+        region.elements.some((className) => type.class.includes(className))
+      );
+
+      if (validRegions.length === 0) return;
+
+      for (let i = 0; i < type.count; i++) {
+        const element = document.createElement("div");
+        element.className = `background-element ${type.class}`;
+        element.textContent = type.emoji;
+        element.style.zIndex = type.zIndex;
+
+        // Select a random region from valid regions
+        const region =
+          validRegions[Math.floor(Math.random() * validRegions.length)];
+
+        // Calculate position within the region
+        const heightRange = region.bottom - region.top;
+        const widthRange = region.right - region.left;
+
+        element.style.top = `${region.top + Math.random() * heightRange}px`;
+
+        const leftPos = region.left + Math.random() * widthRange;
+        element.style.left = `${leftPos}%`;
+
+        // Add some randomness to size
+        let scale = 0.7 + Math.random() * 0.6;
+
+        // Make distant objects smaller
+        if (region.name === "background" || region.name === "sky") {
+          scale *= 0.8;
+        } else if (region.name === "foreground") {
+          scale *= 1.2;
+        }
+
+        element.style.transform = `scale(${scale})`;
+
+        // Add to container
+        raceTrackContainer.appendChild(element);
+      }
+    });
+
+    // Add a few moving elements (birds, butterflies)
+    const movingElements = [
+      { emoji: "🦋", class: "bg-moving butterfly", count: 3 },
+      { emoji: "🐦", class: "bg-moving bird", count: 2 },
+    ];
+
+    movingElements.forEach((type) => {
+      for (let i = 0; i < type.count; i++) {
+        const element = document.createElement("div");
+        element.className = `background-element ${type.class}`;
+        element.textContent = type.emoji;
+
+        // Random starting position
+        element.style.top = `${20 + Math.random() * 150}px`;
+        element.style.left = `${Math.random() * 90}%`;
+
+        // Random animation delay
+        element.style.animationDelay = `${Math.random() * 5}s`;
+
+        raceTrackContainer.appendChild(element);
+      }
+    });
   }
 
   // Create running dust effect
