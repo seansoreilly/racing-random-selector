@@ -52,13 +52,60 @@ body {
   padding: 20px;
 }
 
+/* Header styles */
 header {
   margin-bottom: 30px;
   text-align: center;
+  background-color: var(--card-bg);
+  background-image: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--grey-200);
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.mascot-container {
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-normal);
+  animation: gentle-bounce 3s ease-in-out infinite;
+}
+
+@keyframes gentle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.mascot-container:hover {
+  transform: scale(1.05);
+  animation-play-state: paused;
+}
+
+.mascot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }
 
 .title-container {
   padding: 20px 0;
+  text-align: left;
+  flex-grow: 1;
 }
 
 h1 {
@@ -66,6 +113,19 @@ h1 {
   margin-bottom: 10px;
   font-weight: 700;
   font-size: 2.5rem;
+  position: relative;
+  display: inline-block;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+  border-radius: 3px;
 }
 
 .subtitle {
@@ -389,7 +449,7 @@ input[type="range"]:disabled {
   right: 30px;
   top: 0;
   bottom: 0;
-  width: 15px;
+  width: 12px;
   background: repeating-linear-gradient(
     to bottom,
     black,
@@ -397,7 +457,9 @@ input[type="range"]:disabled {
     white 20px,
     white 40px
   );
-  z-index: 2;
+  z-index: 15;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+  border-right: 2px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Add finish banner */
@@ -410,9 +472,14 @@ input[type="range"]:disabled {
   transform: rotate(-10deg);
 }
 
-/* Remove the red FINISH box */
+/* Make finish line bottom flag visible as well */
 .finish-line::after {
-  content: none;
+  content: '🏁';
+  position: absolute;
+  bottom: 10px;
+  left: -5px;
+  font-size: 24px;
+  transform: rotate(10deg);
 }
 
 .race-lane {
@@ -1047,9 +1114,28 @@ footer {
   .app-container {
     padding: 15px;
   }
-  
+
+  .header-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mascot-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .title-container {
+    text-align: center;
+    padding: 10px 0;
+  }
+
   h1 {
     font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
   }
   
   .panel-header {

@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let raceInterval = null;
 
   // Constants
-  const FINISH_LINE = raceTrackContainer.clientWidth - 120; // Adjust to ensure cars reach the finish line
+  const FINISH_LINE = raceTrackContainer.clientWidth - 80; // Adjust to match the finish-line CSS position (right: 30px) accounting for car width
   const MAX_PARTICIPANTS = 20;
   const RACE_DURATION_BASE = 5000; // Base duration in ms
 
@@ -119,13 +119,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const character =
         characterSet[Math.floor(Math.random() * characterSet.length)];
 
-      // Create participant data
+      // Initialize participant starting position
       const participant = {
         name,
         color,
         character: character.name,
         emoji: character.emoji,
-        x: 20,
+        x: 20, // Set initial X position to match CSS left value
         y: index * laneHeight + laneHeight / 2,
         speed: 0,
         baseSpeed: 1 + Math.random() * 0.5,
@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Create a container for the car and animal
       const carContainer = document.createElement("div");
       carContainer.className = "car-container";
-      carContainer.style.left = "0px"; // Set initial position
+      carContainer.style.left = "20px"; // Set initial position
 
       // Create car body
       const carBody = document.createElement("div");
@@ -461,29 +461,54 @@ document.addEventListener("DOMContentLoaded", () => {
       const nameOffsetMax = 120; // Maximum distance the name can lag behind
       const followerSpeed = 0.93; // How quickly the name follows (0-1), lower is slower
 
-      // Update the follower offset based on car speed
-      participant.nameOffset = Math.min(
-        participant.nameOffset + (1 - followerSpeed) * (participant.x / 15),
-        nameOffsetMax
-      );
+      // If car has finished, ensure name and tether align properly with finish line
+      if (participant.finished) {
+        // Set name position to be a fixed distance behind the finish line
+        const nameX = FINISH_LINE - nameOffsetMax;
+        nameLabel.style.left = `${nameX}px`;
 
-      // Calculate name position
-      const nameX = Math.max(20, participant.x - participant.nameOffset);
+        // Update tether position to connect name to car at finish line
+        const nameLabelRect = nameLabel.getBoundingClientRect();
+        const nameWidth = nameLabelRect.width;
 
-      // Position name element
-      nameLabel.style.left = `${nameX}px`;
+        const tetherStartX = nameX + nameWidth;
+        const tetherEndX = FINISH_LINE;
+        const tetherLength = Math.max(5, tetherEndX - tetherStartX);
 
-      // Update tether position and rotation
-      const nameLabelRect = nameLabel.getBoundingClientRect();
-      const nameWidth = nameLabelRect.width;
+        tether.style.left = `${tetherStartX}px`;
+        tether.style.top = `${carCenterY - laneRect.top}px`;
+        tether.style.width = `${tetherLength}px`;
+      } else if (!raceInProgress && participant.x <= 20) {
+        // Reset position - for when the race hasn't started or has been reset
+        nameLabel.style.left = `-40px`;
+        tether.style.left = `0px`;
+        tether.style.top = `${carCenterY - laneRect.top}px`;
+        tether.style.width = `10px`;
+      } else {
+        // Update the follower offset based on car speed
+        participant.nameOffset = Math.min(
+          participant.nameOffset + (1 - followerSpeed) * (participant.x / 15),
+          nameOffsetMax
+        );
 
-      const tetherStartX = nameX + nameWidth;
-      const tetherEndX = participant.x;
-      const tetherLength = Math.max(5, tetherEndX - tetherStartX);
+        // Calculate name position
+        const nameX = Math.max(20, participant.x - participant.nameOffset);
 
-      tether.style.left = `${tetherStartX}px`;
-      tether.style.top = `${carCenterY - laneRect.top}px`;
-      tether.style.width = `${tetherLength}px`;
+        // Position name element
+        nameLabel.style.left = `${nameX}px`;
+
+        // Update tether position and rotation
+        const nameLabelRect = nameLabel.getBoundingClientRect();
+        const nameWidth = nameLabelRect.width;
+
+        const tetherStartX = nameX + nameWidth;
+        const tetherEndX = participant.x;
+        const tetherLength = Math.max(5, tetherEndX - tetherStartX);
+
+        tether.style.left = `${tetherStartX}px`;
+        tether.style.top = `${carCenterY - laneRect.top}px`;
+        tether.style.width = `${tetherLength}px`;
+      }
     });
   }
 
@@ -572,7 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Check if finished
       if (participant.x >= FINISH_LINE) {
         participant.finished = true;
-        participant.x = FINISH_LINE;
+        participant.x = FINISH_LINE; // Set position exactly at finish line
         const carContainer = racer.querySelector(".car-container");
         if (carContainer) {
           carContainer.style.left = `${FINISH_LINE}px`;
@@ -852,14 +877,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset racers
     participants.forEach((participant, index) => {
-      participant.x = 0;
+      participant.x = 20; // Match the initial car position
       participant.nameOffset = 0;
+      participant.finished = false; // Reset finished state
 
       const racer = document.getElementById(`racer-${index}`);
       if (racer) {
         const carContainer = racer.querySelector(".car-container");
         if (carContainer) {
-          carContainer.style.left = "0px";
+          // Ensure car position is reset immediately
+          carContainer.style.transition = "none";
+          carContainer.style.left = "20px";
+          // Restore transition after a brief delay
+          setTimeout(() => {
+            carContainer.style.transition = "left 0.1s linear";
+          }, 50);
         }
         racer.classList.remove("running", "winner");
       }
