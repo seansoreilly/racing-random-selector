@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let raceInterval = null;
 
   // Constants
-  const FINISH_LINE = raceTrackContainer.clientWidth - 80; // 80px from right edge
+  const FINISH_LINE = raceTrackContainer.clientWidth - 120; // Adjust to ensure cars reach the finish line
   const MAX_PARTICIPANTS = 20;
   const RACE_DURATION_BASE = 5000; // Base duration in ms
 
@@ -133,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
         winning: index === selectedWinner,
         showPhrase: false,
         laneIndex: index,
+        nameOffset: 0, // Name offset for tethering effect
       };
 
       participants.push(participant);
@@ -147,6 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       racer.className = "racer";
       racer.id = `racer-${index}`;
       racer.style.top = `${laneHeight / 2 - 25}px`; // Center vertically
+
+      // Create a container for the car and animal
+      const carContainer = document.createElement("div");
+      carContainer.className = "car-container";
+      carContainer.style.left = "0px"; // Set initial position
 
       // Create car body
       const carBody = document.createElement("div");
@@ -169,10 +175,20 @@ document.addEventListener("DOMContentLoaded", () => {
       animal.className = "racer-animal";
       animal.textContent = character.emoji;
 
+      // Create tether rope
+      const tether = document.createElement("div");
+      tether.className = "tether";
+      tether.id = `tether-${index}`;
+
       // Create name label
       const nameLabel = document.createElement("div");
       nameLabel.className = "racer-name";
+      nameLabel.id = `name-${index}`;
       nameLabel.textContent = name;
+
+      // Position name label initially
+      nameLabel.style.left = "-40px"; // Start slightly behind the car
+      nameLabel.style.top = "50%"; // Center vertically
 
       // Assemble car
       carBody.appendChild(frontWheel);
@@ -185,17 +201,24 @@ document.addEventListener("DOMContentLoaded", () => {
       avatarContainer.appendChild(carBody);
       avatarContainer.appendChild(animal);
 
-      // Assemble racer
-      racer.appendChild(avatarContainer);
-      racer.appendChild(nameLabel);
+      // Assemble car container
+      carContainer.appendChild(avatarContainer);
 
-      // Add to lane
+      // Assemble racer - add tether and name to lane instead of directly to racer
+      racer.appendChild(carContainer);
       lane.appendChild(racer);
+      lane.appendChild(tether);
+      lane.appendChild(nameLabel);
+
+      // Add lane to track
       raceLanes.appendChild(lane);
     });
 
     // Add some clouds
     createClouds();
+
+    // Initial positioning of names and tethers
+    updateTethersAndNames();
   }
 
   // Calculate lane height based on participant count
@@ -238,19 +261,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const racer = document.getElementById(`racer-${racerId}`);
     if (!racer) return;
 
+    const carContainer = racer.querySelector(".car-container");
+    if (!carContainer) return;
+
     const dust = document.createElement("div");
     dust.className = "running-dust";
 
-    // Position behind the racer
-    const racerRect = racer.getBoundingClientRect();
+    // Position behind the car
+    const carRect = carContainer.getBoundingClientRect();
     const containerRect = raceTrackContainer.getBoundingClientRect();
 
     // Position dust particles behind the car at exhaust level
     dust.style.left = `${
-      racerRect.left - containerRect.left - 10 + Math.random() * 4
+      carRect.left - containerRect.left - 10 + Math.random() * 4
     }px`;
     dust.style.top = `${
-      racerRect.top - containerRect.top + racerRect.height / 2 + 5 // Adjusted to wheel level
+      carRect.top - containerRect.top + carRect.height / 2 + 5 // Adjusted to wheel level
     }px`;
 
     // Add size variation
@@ -280,6 +306,54 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       dust.remove();
     }, 350);
+  }
+
+  // Update tethers and names
+  function updateTethersAndNames() {
+    participants.forEach((participant, index) => {
+      const carContainer = document.querySelector(
+        `#racer-${index} .car-container`
+      );
+      const nameLabel = document.getElementById(`name-${index}`);
+      const tether = document.getElementById(`tether-${index}`);
+
+      if (!carContainer || !nameLabel || !tether) return;
+
+      const carRect = carContainer.getBoundingClientRect();
+      const carCenterY = carRect.top + carRect.height / 2;
+      const laneRect = document
+        .querySelectorAll(".race-lane")
+        [index].getBoundingClientRect();
+
+      // Calculate name position - it should lag behind the car
+      // The further the car has moved, the further behind the name should be (up to a limit)
+      const nameOffsetMax = 120; // Maximum distance the name can lag behind
+      const followerSpeed = 0.93; // How quickly the name follows (0-1), lower is slower
+
+      // Update the follower offset based on car speed
+      participant.nameOffset = Math.min(
+        participant.nameOffset + (1 - followerSpeed) * (participant.x / 15),
+        nameOffsetMax
+      );
+
+      // Calculate name position
+      const nameX = Math.max(20, participant.x - participant.nameOffset);
+
+      // Position name element
+      nameLabel.style.left = `${nameX}px`;
+
+      // Update tether position and rotation
+      const nameLabelRect = nameLabel.getBoundingClientRect();
+      const nameWidth = nameLabelRect.width;
+
+      const tetherStartX = nameX + nameWidth;
+      const tetherEndX = participant.x;
+      const tetherLength = Math.max(5, tetherEndX - tetherStartX);
+
+      tether.style.left = `${tetherStartX}px`;
+      tether.style.top = `${carCenterY - laneRect.top}px`;
+      tether.style.width = `${tetherLength}px`;
+    });
   }
 
   // Animate the race
@@ -354,7 +428,10 @@ document.addEventListener("DOMContentLoaded", () => {
       participant.x += speed;
 
       // Update racer element position
-      racer.style.left = `${participant.x}px`;
+      const carContainer = racer.querySelector(".car-container");
+      if (carContainer) {
+        carContainer.style.left = `${participant.x}px`;
+      }
 
       // Create dust effect occasionally
       if (Math.random() < 0.1) {
@@ -365,8 +442,23 @@ document.addEventListener("DOMContentLoaded", () => {
       if (participant.x >= FINISH_LINE) {
         participant.finished = true;
         participant.x = FINISH_LINE;
-        racer.style.left = `${FINISH_LINE}px`;
+        const carContainer = racer.querySelector(".car-container");
+        if (carContainer) {
+          carContainer.style.left = `${FINISH_LINE}px`;
+        }
         racer.classList.remove("running");
+
+        // If this is the first car to finish and it's not the predetermined winner,
+        // update the winning status for all participants
+        if (
+          !participant.winning &&
+          participants.filter((p) => p.finished).length === 1
+        ) {
+          // Update all participants winning status
+          participants.forEach((p, idx) => {
+            p.winning = idx === index;
+          });
+        }
 
         // Check if this is the winner
         if (participant.winning) {
@@ -374,6 +466,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
+
+    // Update tethers and name positions
+    updateTethersAndNames();
   }
 
   // Start race with countdown
@@ -520,8 +615,38 @@ document.addEventListener("DOMContentLoaded", () => {
     speedControl.disabled = false;
     nameInput.disabled = false;
 
+    // Find actual winner - the first car to finish
+    const finishedParticipants = participants.filter((p) => p.finished);
+    let winner;
+
+    if (finishedParticipants.length > 0) {
+      // Use the first finisher as the winner
+      const winnerIndex = participants.findIndex((p) => p.winning);
+
+      if (winnerIndex >= 0) {
+        winner = participants[winnerIndex];
+
+        // Ensure we mark the correct car as winner visually
+        participants.forEach((p, idx) => {
+          const racer = document.getElementById(`racer-${idx}`);
+          if (racer) {
+            if (idx === winnerIndex) {
+              racer.classList.add("winner");
+            } else {
+              racer.classList.remove("winner");
+            }
+          }
+        });
+      } else {
+        // Fallback to the predetermined winner if somehow no winning flag is set
+        winner = participants[selectedWinner];
+      }
+    } else {
+      // If no cars finished (shouldn't happen), use the predetermined winner
+      winner = participants[selectedWinner];
+    }
+
     // Display winner
-    const winner = participants[selectedWinner];
     winnerDisplay.textContent = `Winner: ${winner.name}! 🏆`;
     winnerDisplay.style.backgroundColor = winner.color;
 
@@ -596,15 +721,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset racers
     participants.forEach((participant, index) => {
+      participant.x = 0;
+      participant.nameOffset = 0;
+
       const racer = document.getElementById(`racer-${index}`);
       if (racer) {
-        racer.style.left = "20px";
+        const carContainer = racer.querySelector(".car-container");
+        if (carContainer) {
+          carContainer.style.left = "0px";
+        }
         racer.classList.remove("running", "winner");
+      }
+
+      // Reset name position
+      const nameLabel = document.getElementById(`name-${index}`);
+      if (nameLabel) {
+        nameLabel.style.left = "-40px";
+      }
+
+      // Reset tether
+      const tether = document.getElementById(`tether-${index}`);
+      if (tether) {
+        tether.style.width = "10px";
       }
     });
 
     // Remove dust particles
     document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
+
+    // Update tethers
+    updateTethersAndNames();
   }
 
   // Load saved names if available
