@@ -26,11 +26,6 @@
                         </div>
                         <div class="panel-body">
                             <textarea id="nameInput" placeholder="Enter participant names (one per line)"></textarea>
-                            <div class="buttons">
-                                <button id="startRace" class="btn primary"><i class="fas fa-flag-checkered"></i> Start Race</button>
-                                <button id="resetRace" class="btn danger"><i class="fas fa-redo"></i> Reset</button>
-                                <button id="tryDemo" class="btn demo"><i class="fas fa-magic"></i> Try Demo</button>
-                            </div>
                         </div>
                     </div>
                     
@@ -39,9 +34,9 @@
                             <h2><i class="fas fa-sliders-h"></i> Race Settings</h2>
                         </div>
                         <div class="panel-body">
-                            <div class="speed-control">
-                                <label for="speedControl">Race Speed: <span id="speedValue">Medium</span></label>
-                                <input type="range" id="speedControl" min="0" max="100" value="50">
+                            <div class="setting-item">
+                                <div class="setting-label">Race Speed: <span id="speedValue" class="setting-value">Slow</span></div>
+                                <input type="range" id="speedControl" min="0" max="100" value="70">
                                 <div class="speed-labels">
                                     <span>Faster</span>
                                     <span>Slower</span>
@@ -63,6 +58,12 @@
                     </div>
                 </section>
             </div>
+
+            <section class="action-buttons">
+                <button id="startRace" class="btn primary large"><i class="fas fa-flag-checkered"></i> Start Race</button>
+                <button id="resetRace" class="btn danger"><i class="fas fa-redo"></i> Reset</button>
+                <button id="tryDemo" class="btn demo"><i class="fas fa-magic"></i> Try Demo</button>
+            </section>
 
             <section class="results-section">
                 <div class="panel">
