@@ -42,16 +42,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Character set with emojis
   const characterSet = [
-    { name: "runner", emoji: "🏃" },
-    { name: "cyclist", emoji: "🚴" },
-    { name: "swimmer", emoji: "🏊" },
-    { name: "skier", emoji: "⛷️" },
-    { name: "snowboarder", emoji: "🏂" },
-    { name: "horse", emoji: "🏇" },
-    { name: "football", emoji: "🏈" },
-    { name: "basketball", emoji: "🏀" },
-    { name: "baseball", emoji: "⚾" },
-    { name: "tennis", emoji: "🎾" },
+    { name: "kangaroo", emoji: "🦘" },
+    { name: "kangaroo2", emoji: "🦘" },
+    { name: "kangaroo3", emoji: "🦘" },
+    { name: "kangaroo4", emoji: "🦘" },
+    { name: "kangaroo5", emoji: "🦘" },
+    { name: "kangaroo6", emoji: "🦘" },
+    { name: "kangaroo7", emoji: "🦘" },
+    { name: "kangaroo8", emoji: "🦘" },
+    { name: "kangaroo9", emoji: "🦘" },
+    { name: "kangaroo10", emoji: "🦘" },
   ];
 
   // Color palette for participants
