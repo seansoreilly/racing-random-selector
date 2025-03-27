@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Constants
   const FINISH_LINE = raceTrackContainer.clientWidth - 80; // 80px from right edge
-  const MAX_PARTICIPANTS = 10;
+  const MAX_PARTICIPANTS = 20;
   const RACE_DURATION_BASE = 5000; // Base duration in ms
 
   // Sample names
@@ -271,6 +271,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Calculate speed and acceleration
       let maxSpeed = 5; // Max speed in pixels per frame
 
+      // Apply global slowdown factor (3 times slower)
+      maxSpeed = maxSpeed / 3;
+
       // Adjust speed for the predetermined winner
       if (participant.winning) {
         // Ensure the winner makes progress but doesn't always lead
@@ -393,7 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
         countdownOverlay.style.display = "none";
 
         // Start the race animation interval
-        raceInterval = setInterval(animateRace, 16); // ~60fps
+        raceInterval = setInterval(animateRace, 48); // Change from 16ms (~60fps) to 48ms (~20fps)
       }, 1000);
     }
   }
