@@ -42,30 +42,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Character set with emojis
   const characterSet = [
-    { name: "kangaroo", emoji: "🦘" },
-    { name: "kangaroo2", emoji: "🦘" },
-    { name: "kangaroo3", emoji: "🦘" },
-    { name: "kangaroo4", emoji: "🦘" },
-    { name: "kangaroo5", emoji: "🦘" },
-    { name: "kangaroo6", emoji: "🦘" },
-    { name: "kangaroo7", emoji: "🦘" },
-    { name: "kangaroo8", emoji: "🦘" },
-    { name: "kangaroo9", emoji: "🦘" },
-    { name: "kangaroo10", emoji: "🦘" },
+    { name: "cat", emoji: "🐱" },
+    { name: "dog", emoji: "🐶" },
+    { name: "rabbit", emoji: "🐰" },
+    { name: "panda", emoji: "🐼" },
+    { name: "fox", emoji: "🦊" },
+    { name: "bear", emoji: "🐻" },
+    { name: "koala", emoji: "🐨" },
+    { name: "tiger", emoji: "🐯" },
+    { name: "monkey", emoji: "🐵" },
+    { name: "pig", emoji: "🐷" },
   ];
 
-  // Color palette for participants
+  // Color palette for cars
   const colorPalette = [
-    "#FF5733",
-    "#33FF57",
-    "#3357FF",
-    "#FF33A8",
-    "#33FFF5",
-    "#F5FF33",
-    "#FF5733",
-    "#C233FF",
-    "#33FF57",
-    "#FF8C33",
+    "#FF5733", // Red
+    "#33FF57", // Green
+    "#3357FF", // Blue
+    "#FF33A8", // Pink
+    "#33FFF5", // Cyan
+    "#F5FF33", // Yellow
+    "#C233FF", // Purple
+    "#FF8C33", // Orange
+    "#33FFBD", // Mint
+    "#FF335C", // Crimson
   ];
 
   // Speed control event listener
@@ -146,21 +146,47 @@ document.addEventListener("DOMContentLoaded", () => {
       const racer = document.createElement("div");
       racer.className = "racer";
       racer.id = `racer-${index}`;
-      racer.style.top = `${laneHeight / 2 - 20}px`; // Center vertically
+      racer.style.top = `${laneHeight / 2 - 25}px`; // Center vertically
 
-      // Create avatar
-      const avatar = document.createElement("div");
-      avatar.className = "racer-avatar";
-      avatar.style.backgroundColor = color;
-      avatar.textContent = character.emoji;
+      // Create car body
+      const carBody = document.createElement("div");
+      carBody.className = "racer-car";
+      carBody.style.backgroundColor = color;
+
+      // Create wheels
+      const frontWheel = document.createElement("div");
+      frontWheel.className = "car-wheel front";
+
+      const backWheel = document.createElement("div");
+      backWheel.className = "car-wheel back";
+
+      // Create exhaust
+      const exhaust = document.createElement("div");
+      exhaust.className = "car-exhaust";
+
+      // Create animal
+      const animal = document.createElement("div");
+      animal.className = "racer-animal";
+      animal.textContent = character.emoji;
 
       // Create name label
       const nameLabel = document.createElement("div");
       nameLabel.className = "racer-name";
       nameLabel.textContent = name;
 
+      // Assemble car
+      carBody.appendChild(frontWheel);
+      carBody.appendChild(backWheel);
+      carBody.appendChild(exhaust);
+
+      // Create avatar container
+      const avatarContainer = document.createElement("div");
+      avatarContainer.className = "racer-avatar";
+      avatarContainer.appendChild(carBody);
+      avatarContainer.appendChild(animal);
+
       // Assemble racer
-      racer.appendChild(avatar);
+      racer.appendChild(avatarContainer);
       racer.appendChild(nameLabel);
 
       // Add to lane
@@ -219,29 +245,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const racerRect = racer.getBoundingClientRect();
     const containerRect = raceTrackContainer.getBoundingClientRect();
 
+    // Position dust particles behind the car at exhaust level
     dust.style.left = `${
-      racerRect.left - containerRect.left - 10 + Math.random() * 8
+      racerRect.left - containerRect.left - 10 + Math.random() * 4
     }px`;
     dust.style.top = `${
-      racerRect.top -
-      containerRect.top +
-      racerRect.height / 2 +
-      Math.random() * 10 -
-      5
+      racerRect.top - containerRect.top + racerRect.height / 2 + 5 // Adjusted to wheel level
     }px`;
 
     // Add size variation
-    const size = 2 + Math.random() * 5;
+    const size = 3 + Math.random() * 7;
     dust.style.width = `${size}px`;
     dust.style.height = `${size}px`;
+
+    // Add color variation for exhaust
+    const opacity = 0.3 + Math.random() * 0.3;
+    dust.style.backgroundColor = `rgba(150, 150, 150, ${opacity})`;
 
     // Add to container
     raceTrackContainer.appendChild(dust);
 
+    // Add fading animation
+    dust.style.transition = "all 0.3s ease-out";
+
+    // Apply the animation after a tiny delay to ensure transition works
+    setTimeout(() => {
+      dust.style.transform = `translate(-${10 + Math.random() * 15}px, -${
+        Math.random() * 10
+      }px) scale(${1 + Math.random()})`;
+      dust.style.opacity = "0";
+    }, 10);
+
     // Remove after animation
     setTimeout(() => {
       dust.remove();
-    }, 500);
+    }, 350);
   }
 
   // Animate the race
@@ -662,7 +700,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const racer = document.getElementById(`racer-${index}`);
         if (racer) {
-          racer.style.top = `${laneHeight / 2 - 20}px`;
+          racer.style.top = `${laneHeight / 2 - 25}px`;
         }
       });
     }
