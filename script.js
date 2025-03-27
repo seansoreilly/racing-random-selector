@@ -20,6 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const MAX_PARTICIPANTS = 20; // Maximum number of participants
   let speedFactor = 1; // Default speed factor
   let raceCount = 0; // Track number of races
+  let sprites = {}; // Character sprites
+  let animationFrame = 0; // For sprite animation
+  let frameCount = 0; // For controlling animation speed
+
+  // Define character set
+  const characterSet = [
+    { name: "runner", frames: 2, runningPhrase: "I'm running fast!" },
+    { name: "unicorn", frames: 2, runningPhrase: "Magical speed!" },
+    { name: "robot", frames: 2, runningPhrase: "Beep boop zoom!" },
+    { name: "dino", frames: 2, runningPhrase: "Prehistoric pace!" },
+    { name: "ninja", frames: 2, runningPhrase: "Silent but swift!" },
+    { name: "zombie", frames: 2, runningPhrase: "Braaains... fast brains!" },
+    { name: "dog", frames: 2, runningPhrase: "Woof! Catch me!" },
+    { name: "cat", frames: 2, runningPhrase: "Meow-speed!" },
+  ];
 
   // Sample names for demo
   const sampleNames = [
@@ -39,6 +54,35 @@ document.addEventListener("DOMContentLoaded", () => {
     "Ankur",
   ];
 
+  // Preload character sprites
+  function loadSprites() {
+    characterSet.forEach((character) => {
+      sprites[character.name] = [];
+      for (let i = 1; i <= character.frames; i++) {
+        const img = new Image();
+        img.src = `sprites/${character.name}${i}.png`;
+        sprites[character.name].push(img);
+
+        // Fallback if image fails to load
+        img.onerror = function () {
+          console.log(`Failed to load sprite: ${character.name}${i}.png`);
+          // Create emoji fallback
+          const emojiMap = {
+            runner: "🏃",
+            unicorn: "🦄",
+            robot: "🤖",
+            dino: "🦖",
+            ninja: "🥷",
+            zombie: "🧟",
+            dog: "🐕",
+            cat: "🐈",
+          };
+          character.emoji = emojiMap[character.name] || "😊";
+        };
+      }
+    });
+  }
+
   // Initialize speed control
   function initSpeedControl() {
     speedControl.addEventListener("input", function () {
@@ -49,8 +93,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Set initial value
-    speedControl.value = 50;
-    speedValue.textContent = getSpeedLabel(50);
+    speedControl.value = 70;
+    speedValue.textContent = getSpeedLabel(70);
     // Apply initial speedFactor
     speedFactor = 3;
   }
@@ -91,6 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         addResultToHistory(
           result.winner,
           result.color,
+          result.character,
           result.timestamp,
           false
         );
@@ -104,10 +149,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Save race result to localStorage
-  function saveRaceResult(winner, color) {
+  function saveRaceResult(winner, color, character) {
     const result = {
       winner,
       color,
+      character,
       timestamp: new Date().toLocaleString(),
     };
 
@@ -128,20 +174,30 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSavedNames();
   loadRaceHistory();
   initSpeedControl();
+  loadSprites();
   window.addEventListener("resize", setupCanvas);
 
-  // Draw the race track
+  // Draw the race track with fun theme
   function drawTrack() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw track background
-    ctx.fillStyle = "#e8e8e8";
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    gradient.addColorStop(0, "#f0f4ff");
+    gradient.addColorStop(1, "#e6edff");
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Draw clouds in the background
+    drawClouds();
+
+    // Draw grass
+    ctx.fillStyle = "#95e495";
+    ctx.fillRect(0, canvas.height - 15, canvas.width, 15);
+
     // Draw finish line
-    ctx.fillStyle = "#333";
-    ctx.fillRect(canvas.width - 10, 0, 2, canvas.height);
+    drawFinishLine();
 
     // Draw lane dividers
     if (participants.length > 0) {
@@ -151,10 +207,71 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx.beginPath();
         ctx.moveTo(0, i * laneHeight);
         ctx.lineTo(canvas.width, i * laneHeight);
-        ctx.strokeStyle = "#ccc";
+        ctx.strokeStyle = "#dcecff";
         ctx.stroke();
       }
     }
+  }
+
+  // Draw decorative clouds
+  function drawClouds() {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+
+    // Cloud 1
+    drawCloud(canvas.width * 0.2, 40, 60);
+
+    // Cloud 2
+    drawCloud(canvas.width * 0.6, 30, 45);
+
+    // Cloud 3
+    drawCloud(canvas.width * 0.8, 50, 65);
+  }
+
+  // Helper function to draw a cloud
+  function drawCloud(x, y, size) {
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+    ctx.arc(x + size / 2, y - size / 4, size / 3, 0, Math.PI * 2);
+    ctx.arc(x + size, y, size / 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw finish line
+  function drawFinishLine() {
+    const finishX = canvas.width - 40;
+    const checkSize = 10;
+    const finishHeight = canvas.height - 15; // Above grass
+
+    // Draw finish pole
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fillRect(finishX, 0, 10, finishHeight);
+
+    // Draw checkered pattern
+    ctx.fillStyle = "#000";
+    for (let y = 0; y < finishHeight; y += checkSize * 2) {
+      for (let i = 0; i < 2; i++) {
+        ctx.fillRect(finishX, y + i * checkSize, checkSize, checkSize);
+        ctx.fillRect(
+          finishX + checkSize,
+          y + (i + 1) * checkSize,
+          checkSize,
+          checkSize
+        );
+      }
+    }
+
+    // Draw finishing banner
+    ctx.fillStyle = "#e74c3c";
+    ctx.fillRect(finishX - 5, 0, 20, 30);
+
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 12px Arial";
+    ctx.save();
+    ctx.translate(finishX + 5, 15);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center";
+    ctx.fillText("FINISH", 0, 0);
+    ctx.restore();
   }
 
   // Parse names from input
@@ -183,16 +300,25 @@ document.addEventListener("DOMContentLoaded", () => {
       // Ensure colors are not too light (better contrast with white text)
       const color = `hsl(${hue}, 70%, 50%)`;
 
+      // Assign random character type
+      const characterType =
+        characterSet[Math.floor(Math.random() * characterSet.length)];
+
       participants.push({
         name,
         x: 20, // Starting position
         y: index * laneHeight + laneHeight / 2,
-        radius: Math.min(12, laneHeight / 4), // Make smaller radius for more participants
+        size: Math.min(24, laneHeight / 3), // Size for character
         color,
         speed: 0,
+        speedVariation: 0,
         finished: false,
         laneIndex: index,
         laneHeight,
+        character: characterType.name,
+        phrase: characterType.runningPhrase,
+        showPhrase: false,
+        phraseDuration: 0,
       });
     });
 
@@ -202,35 +328,113 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Draw participants
   function drawParticipants() {
+    // Update animation frame every few frames
+    frameCount++;
+    if (frameCount > 5) {
+      animationFrame = (animationFrame + 1) % 2; // Toggle between 0 and 1 for simple 2-frame animation
+      frameCount = 0;
+    }
+
     participants.forEach((participant) => {
-      // Draw runner (circle)
-      ctx.beginPath();
-      ctx.arc(participant.x, participant.y, participant.radius, 0, Math.PI * 2);
-      ctx.fillStyle = participant.color;
-      ctx.fill();
+      const x = participant.x;
+      const y = participant.y;
+      const size = participant.size;
 
-      // Draw initials
-      ctx.fillStyle = "#fff";
-      const fontSize = Math.min(12, participant.radius * 1.2);
-      ctx.font = `${fontSize}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
+      // Check if we have the sprite
+      if (
+        sprites[participant.character] &&
+        sprites[participant.character].length > 0
+      ) {
+        // Use loaded sprite
+        const sprite = sprites[participant.character][animationFrame];
+        if (sprite.complete && sprite.naturalHeight !== 0) {
+          // Draw sprite image
+          ctx.drawImage(sprite, x - size, y - size, size * 2, size * 2);
+        } else {
+          // Fallback to emoji
+          drawEmojiCharacter(participant);
+        }
+      } else {
+        // Fallback to emoji
+        drawEmojiCharacter(participant);
+      }
 
-      // Get the first letter (initial) of the name
-      const initial = participant.name.charAt(0);
-      ctx.fillText(initial, participant.x, participant.y);
-
-      // Draw name next to the runner - adjust font size based on lane height
+      // Draw name above character
       ctx.fillStyle = "#333";
       const nameFontSize = Math.min(14, participant.laneHeight / 2.5);
-      ctx.font = `${nameFontSize}px Arial`;
-      ctx.textAlign = "left";
-      ctx.fillText(
-        participant.name,
-        10,
-        participant.y - participant.radius - 2
-      );
+      ctx.font = `${nameFontSize}px var(--font-primary)`;
+      ctx.textAlign = "center";
+      ctx.fillText(participant.name, x, y - size - 5);
+
+      // Draw speech bubble if active
+      if (participant.showPhrase && participant.phraseDuration > 0) {
+        drawSpeechBubble(x + size + 10, y, participant.phrase);
+      }
+
+      // Draw "dust" behind running character
+      if (!participant.finished && raceInProgress) {
+        drawRunningDust(x - size / 2, y + size / 2);
+      }
     });
+  }
+
+  // Draw emoji character as fallback
+  function drawEmojiCharacter(participant) {
+    const character = characterSet.find(
+      (c) => c.name === participant.character
+    );
+    const emoji = character?.emoji || "🏃";
+
+    ctx.font = `${participant.size * 1.5}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(emoji, participant.x, participant.y);
+  }
+
+  // Draw speech bubble
+  function drawSpeechBubble(x, y, text) {
+    const bubbleWidth = ctx.measureText(text).width + 20;
+    const bubbleHeight = 30;
+
+    // Bubble background
+    ctx.fillStyle = "#fff";
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 1;
+
+    // Draw rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - 10, y + 10);
+    ctx.lineTo(x, y + 5);
+    ctx.lineTo(x, y + bubbleHeight);
+    ctx.arcTo(x + bubbleWidth, y + bubbleHeight, x + bubbleWidth, y, 5);
+    ctx.arcTo(x + bubbleWidth, y, x, y, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = "#333";
+    ctx.font = "12px var(--font-secondary)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, x + bubbleWidth / 2, y + bubbleHeight / 2);
+  }
+
+  // Draw dust effect behind running character
+  function drawRunningDust(x, y) {
+    ctx.fillStyle = "rgba(200, 200, 200, 0.5)";
+
+    // Draw a few random particles
+    for (let i = 0; i < 3; i++) {
+      const size = Math.random() * 5 + 2;
+      const offsetX = Math.random() * 10 - 15;
+      const offsetY = Math.random() * 10 - 5;
+
+      ctx.beginPath();
+      ctx.arc(x + offsetX, y + offsetY, size, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   // Animate the race
@@ -260,6 +464,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // Random speed bursts for drama (less frequent for slower race)
         if (Math.random() < 0.05) {
           speed *= 1.3 + Math.random() * 0.3;
+
+          // Randomly show speech bubble during speed bursts
+          if (Math.random() < 0.3 && !participant.showPhrase) {
+            participant.showPhrase = true;
+            participant.phraseDuration = 50; // Show for 50 frames
+          }
         }
 
         // Occasional slowdowns for drama
@@ -278,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Near finish line excitement - runners get a burst near the end
-        const distanceToFinish = canvas.width - 20 - participant.x;
+        const distanceToFinish = canvas.width - 60 - participant.x;
         if (distanceToFinish < 100 && Math.random() < 0.1) {
           speed *= 1.2;
         }
@@ -286,10 +496,25 @@ document.addEventListener("DOMContentLoaded", () => {
         // Update position
         participant.x += speed;
 
+        // Decrease speech bubble duration if active
+        if (participant.showPhrase) {
+          participant.phraseDuration--;
+          if (participant.phraseDuration <= 0) {
+            participant.showPhrase = false;
+          }
+        }
+
         // Check if finished
-        if (participant.x >= canvas.width - 20) {
-          participant.x = canvas.width - 20; // Snap to finish line
+        if (participant.x >= canvas.width - 60) {
+          participant.x = canvas.width - 60; // Snap to finish line
           participant.finished = true;
+
+          // Show celebration phrase for winner
+          if (index === selectedWinner) {
+            participant.phrase = "I won! 🎉";
+            participant.showPhrase = true;
+            participant.phraseDuration = 100; // Show longer for winner
+          }
         }
       }
     });
@@ -354,7 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 60px Arial";
+    ctx.font = "bold 60px var(--font-primary)";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -372,11 +597,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Add result to history display
-  function addResultToHistory(winnerName, color, timestamp, save = true) {
+  function addResultToHistory(
+    winnerName,
+    color,
+    character,
+    timestamp,
+    save = true
+  ) {
     const resultElement = document.createElement("div");
     resultElement.className = "result-item";
+
+    // Get emoji for the character type
+    const characterObj = characterSet.find((c) => c.name === character);
+    const emoji = characterObj?.emoji || "🏃";
+
     resultElement.innerHTML = `
-      <div class="result-color" style="background-color: ${color}"></div>
+      <div class="result-color" style="background-color: ${color}">${emoji}</div>
       <div class="result-info">
         <div class="result-winner">${winnerName}</div>
         <div class="result-time">${timestamp}</div>
@@ -388,7 +624,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Save to localStorage if this is a new result
     if (save) {
-      saveRaceResult(winnerName, color);
+      saveRaceResult(winnerName, color, character);
     }
 
     // Add fade-in animation
@@ -418,12 +654,74 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Add to results history
     const timestamp = new Date().toLocaleString();
-    addResultToHistory(winner.name, winner.color, timestamp);
+    addResultToHistory(winner.name, winner.color, winner.character, timestamp);
 
     // Add celebration animation
     setTimeout(() => {
       winnerDisplay.classList.add("show");
+      playCelebrationEffect();
     }, 100);
+
+    // Don't reset participants so they remain visible on the track
+  }
+
+  // Play celebration effect
+  function playCelebrationEffect() {
+    // Draw confetti
+    const confettiAmount = 100;
+    let confetti = [];
+
+    // Create confetti particles
+    for (let i = 0; i < confettiAmount; i++) {
+      confetti.push({
+        x: canvas.width - 60, // Position near finish line
+        y: 0,
+        size: Math.random() * 8 + 5,
+        color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+        speedX: (Math.random() - 0.5) * 5,
+        speedY: Math.random() * 5 + 2,
+        rotation: Math.random() * 360,
+      });
+    }
+
+    // Animate confetti
+    function animateConfetti() {
+      if (!winnerDisplay.classList.contains("show")) return; // Stop if celebration ended
+
+      // Clear only the top portion where confetti will be
+      ctx.clearRect(0, 0, canvas.width, 100);
+      drawTrack();
+      drawParticipants();
+
+      // Draw and update confetti
+      for (let i = 0; i < confetti.length; i++) {
+        const c = confetti[i];
+
+        // Draw confetti piece
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate((c.rotation * Math.PI) / 180);
+        ctx.fillStyle = c.color;
+        ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size);
+        ctx.restore();
+
+        // Update position
+        c.x += c.speedX;
+        c.y += c.speedY;
+        c.rotation += 5;
+
+        // Reset if off screen
+        if (c.y > canvas.height) {
+          c.y = 0;
+          c.x = Math.random() * canvas.width;
+        }
+      }
+
+      requestAnimationFrame(animateConfetti);
+    }
+
+    // Start confetti animation
+    animateConfetti();
   }
 
   // Helper function to determine color brightness
@@ -436,15 +734,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return 128; // Default middle brightness
   }
 
-  // Reset race
+  // Reset race (but keep participants visible)
   function resetRace() {
     if (animationId) {
       cancelAnimationFrame(animationId);
     }
 
     raceInProgress = false;
-    participants = [];
-    selectedWinner = null;
     startRaceBtn.disabled = false;
     resetRaceBtn.disabled = false;
     tryDemoBtn.disabled = false;
@@ -453,7 +749,19 @@ document.addEventListener("DOMContentLoaded", () => {
     winnerDisplay.style.display = "none";
     winnerDisplay.classList.remove("show");
 
-    drawTrack();
+    // Instead of clearing participants, just reset their positions if they exist
+    if (participants.length > 0) {
+      participants.forEach((participant) => {
+        participant.x = 20;
+        participant.finished = false;
+        participant.showPhrase = false;
+      });
+
+      drawTrack();
+      drawParticipants();
+    } else {
+      drawTrack();
+    }
   }
 
   // Clear race history
