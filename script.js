@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const winnerDisplay = document.getElementById("winner");
   const speedControl = document.getElementById("speedControl");
   const speedValue = document.getElementById("speedValue");
+  const resultsContainer = document.getElementById("resultsContainer");
 
   // Race variables
   let participants = [];
@@ -18,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let countdown = 0;
   const MAX_PARTICIPANTS = 20; // Maximum number of participants
   let speedFactor = 1; // Default speed factor
+  let raceCount = 0; // Track number of races
 
   // Sample names for demo
   const sampleNames = [
@@ -80,14 +82,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Load race history if available
+  function loadRaceHistory() {
+    const savedResults = localStorage.getItem("raceResults");
+    if (savedResults) {
+      const results = JSON.parse(savedResults);
+      results.forEach((result) => {
+        addResultToHistory(
+          result.winner,
+          result.color,
+          result.timestamp,
+          false
+        );
+      });
+    }
+  }
+
   // Save names to localStorage
   function saveNames() {
     localStorage.setItem("raceNames", nameInput.value);
   }
 
+  // Save race result to localStorage
+  function saveRaceResult(winner, color) {
+    const result = {
+      winner,
+      color,
+      timestamp: new Date().toLocaleString(),
+    };
+
+    let results = [];
+    const savedResults = localStorage.getItem("raceResults");
+    if (savedResults) {
+      results = JSON.parse(savedResults);
+    }
+
+    results.push(result);
+    localStorage.setItem("raceResults", JSON.stringify(results));
+
+    return result;
+  }
+
   // Initialize when page loads
   setupCanvas();
   loadSavedNames();
+  loadRaceHistory();
   initSpeedControl();
   window.addEventListener("resize", setupCanvas);
 
@@ -281,6 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Initialize race
       raceInProgress = true;
+      raceCount++;
       startRaceBtn.disabled = true;
       resetRaceBtn.disabled = true;
       tryDemoBtn.disabled = true;
@@ -331,6 +371,32 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Add result to history display
+  function addResultToHistory(winnerName, color, timestamp, save = true) {
+    const resultElement = document.createElement("div");
+    resultElement.className = "result-item";
+    resultElement.innerHTML = `
+      <div class="result-color" style="background-color: ${color}"></div>
+      <div class="result-info">
+        <div class="result-winner">${winnerName}</div>
+        <div class="result-time">${timestamp}</div>
+      </div>
+    `;
+
+    // Add to results list
+    resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+
+    // Save to localStorage if this is a new result
+    if (save) {
+      saveRaceResult(winnerName, color);
+    }
+
+    // Add fade-in animation
+    setTimeout(() => {
+      resultElement.classList.add("visible");
+    }, 50);
+  }
+
   // End race and display winner
   function endRace() {
     raceInProgress = false;
@@ -349,6 +415,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const brightness = getColorBrightness(winner.color);
     winnerDisplay.style.color = brightness > 128 ? "#000" : "#fff";
     winnerDisplay.style.display = "block";
+
+    // Add to results history
+    const timestamp = new Date().toLocaleString();
+    addResultToHistory(winner.name, winner.color, timestamp);
 
     // Add celebration animation
     setTimeout(() => {
@@ -386,6 +456,14 @@ document.addEventListener("DOMContentLoaded", () => {
     drawTrack();
   }
 
+  // Clear race history
+  function clearHistory() {
+    if (confirm("Are you sure you want to clear all race history?")) {
+      resultsContainer.innerHTML = "";
+      localStorage.removeItem("raceResults");
+    }
+  }
+
   // Load demo names
   function loadDemoNames() {
     nameInput.value = sampleNames.join("\n");
@@ -395,6 +473,12 @@ document.addEventListener("DOMContentLoaded", () => {
   startRaceBtn.addEventListener("click", startRace);
   resetRaceBtn.addEventListener("click", resetRace);
   tryDemoBtn.addEventListener("click", loadDemoNames);
+
+  // Add clear history button event listener if it exists
+  const clearHistoryBtn = document.getElementById("clearHistory");
+  if (clearHistoryBtn) {
+    clearHistoryBtn.addEventListener("click", clearHistory);
+  }
 
   // Add error handling for canvas operations
   window.addEventListener("error", function (e) {
