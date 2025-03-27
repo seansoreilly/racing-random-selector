@@ -10,30 +10,34 @@
             "use": "@vercel/static"
         },
         {
-            "src": "styles.css",
+            "src": "*.css",
             "use": "@vercel/static"
         },
         {
-            "src": "script.js",
+            "src": "*.js",
             "use": "@vercel/static"
         },
         {
             "src": "sprites/**",
             "use": "@vercel/static"
+        },
+        {
+            "src": "public/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/styles.css",
-            "dest": "/styles.css"
-        },
-        {
-            "src": "/script.js",
-            "dest": "/script.js"
-        },
-        {
             "src": "/sprites/(.*)",
             "dest": "/sprites/$1"
+        },
+        {
+            "src": "/public/(.*)",
+            "dest": "/public/$1"
+        },
+        {
+            "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|html))",
+            "dest": "/$1"
         },
         {
             "src": "/(.*)",
