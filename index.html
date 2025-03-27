@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Racing Random Selector</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Racing Random Selector</h1>
+        
+        <div class="input-section">
+            <h2>Enter Names</h2>
+            <textarea id="nameInput" placeholder="Enter names (one per line)"></textarea>
+            <div class="buttons">
+                <button id="startRace">Start Race</button>
+                <button id="resetRace">Reset</button>
+                <button id="tryDemo" class="demo-btn">Try Demo</button>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <div class="speed-control">
+                <label for="speedControl">Race Speed: <span id="speedValue">Medium</span></label>
+                <input type="range" id="speedControl" min="0" max="100" value="50">
+                <div class="speed-labels">
+                    <span>Faster</span>
+                    <span>Slower</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="race-section">
+            <canvas id="raceTrack"></canvas>
+        </div>
+        
+        <div class="results-section">
+            <div id="winner" class="winner-display"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
