@@ -446,7 +446,7 @@ input[type="range"]:disabled {
 
 .finish-line {
   position: absolute;
-  right: 30px;
+  right: 100px;
   top: 0;
   bottom: 0;
   width: 12px;

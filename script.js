@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let raceInterval = null;
 
   // Constants
-  const FINISH_LINE = raceTrackContainer.clientWidth - 80; // Adjust to match the finish-line CSS position (right: 30px) accounting for car width
+  const FINISH_LINE = raceTrackContainer.clientWidth - 150; // Adjust to match the finish-line CSS position (right: 100px) accounting for car width
   const MAX_PARTICIPANTS = 20;
   const RACE_DURATION_BASE = 5000; // Base duration in ms
 
@@ -602,7 +602,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (carContainer) {
           carContainer.style.left = `${FINISH_LINE}px`;
         }
-        racer.classList.remove("running");
+        racer.classList.remove("running"); // Stop the running animation
 
         // If this is the first car to finish and it's not the predetermined winner,
         // update the winning status for all participants
