@@ -22,7 +22,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const raceTrackContainer = document.getElementById("raceTrackContainer");
   const raceLanes = document.getElementById("raceLanes");
   const countdownOverlay = document.getElementById("countdownOverlay");
-  const showLoserCheckbox = document.getElementById("showLoser");
 
   // Race variables
   let participants = [];
@@ -410,8 +409,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function animateRace() {
     const allFinished = participants.every((p) => p.finished);
     if (allFinished) {
-      // endRace();
       clearInterval(raceInterval);
+      raceInterval = null;
+      // Enable start button but keep positions visible
+      startRaceBtn.disabled = false;
+      speedControl.disabled = false;
+      nameInput.disabled = false;
+      raceInProgress = false;
       return;
     }
 
@@ -574,6 +578,18 @@ document.addEventListener("DOMContentLoaded", () => {
   function startRace() {
     console.log("Starting race...");
     try {
+      // Reset race state
+      if (raceInterval) {
+        clearInterval(raceInterval);
+        raceInterval = null;
+      }
+      
+      // Clear previous race positions
+      document.querySelectorAll(".race-lane").forEach((lane) => {
+        lane.querySelectorAll(".place-label").forEach((label) => label.remove());
+      });
+      document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
+      
       console.log("Current participants:", nameInput.value);
       if (!nameInput.value.trim()) {
         nameInput.value = sampleNames.join("\n");
@@ -603,6 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       saveNames();
       finishOrder = []; // Reset finish order for new race
+      participants = []; // Reset participants array
 
       initializeParticipants(names);
 
@@ -699,7 +716,6 @@ document.addEventListener("DOMContentLoaded", () => {
     color,
     character,
     timestamp,
-    isLoser = false,
     save = true
   ) {
     const resultElement = document.createElement("div");
@@ -711,7 +727,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resultElement.innerHTML = `
       <div class="result-color" style="background-color: ${color}">${emoji}</div>
       <div class="result-info">
-        <div class="result-winner">${isLoser ? '🐢 ' : '🏆 '}${participantName}</div>
+        <div class="result-winner">🏆 ${participantName}</div>
         <div class="result-time">${timestamp}</div>
       </div>
     `;
@@ -719,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
 
     if (save) {
-      saveRaceResult(participantName, color, character, isLoser);
+      saveRaceResult(participantName, color, character);
     }
 
     setTimeout(() => {
@@ -731,8 +747,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function cleanupRace() {
     if (raceInterval) {
       clearInterval(raceInterval);
+      raceInterval = null;
     }
 
+    // Reset race state
     raceInProgress = false;
     startRaceBtn.disabled = false;
     speedControl.disabled = false;
@@ -740,8 +758,13 @@ document.addEventListener("DOMContentLoaded", () => {
     winnerDisplay.style.display = "none";
     winnerDisplay.classList.remove("show");
     countdownOverlay.style.display = "none";
-
+    finishOrder = [];
+    
+    // Clear visual elements
     document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
+    document.querySelectorAll(".race-lane").forEach((lane) => {
+      lane.querySelectorAll(".place-label").forEach((label) => label.remove());
+    });
   }
 
   // Load saved names if available
@@ -763,7 +786,6 @@ document.addEventListener("DOMContentLoaded", () => {
           result.color,
           result.character,
           result.timestamp,
-          result.isLoser,
           false
         );
       });
@@ -776,12 +798,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Save race result to localStorage
-  function saveRaceResult(participant, color, character, isLoser) {
+  function saveRaceResult(participant, color, character) {
     const result = {
       participant,
       color,
       character,
-      isLoser,
       timestamp: new Date().toLocaleString(),
     };
 
