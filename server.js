@@ -1,3 +1,8 @@
+// Clear module cache
+Object.keys(require.cache).forEach(function(key) {
+  delete require.cache[key];
+});
+
 const express = require("express");
 const path = require("path");
 

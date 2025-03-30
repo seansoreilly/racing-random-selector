@@ -1,6 +1,6 @@
 /* Base styles and reset */
 :root {
-  --primary-color: #6366f1;
+  --primary-color: #4f46e5;
   --primary-dark: #4f46e5;
   --secondary-color: #0ea5e9;
   --accent-color: #ec4899;
@@ -43,6 +43,7 @@ body {
   color: var(--text-color);
   background-color: var(--body-bg);
   min-height: 100vh;
+  padding: 0 20px;
 }
 
 /* Layout */

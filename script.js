@@ -2,8 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements
   const nameInput = document.getElementById("nameInput");
   const startRaceBtn = document.getElementById("startRace");
-  const resetRaceBtn = document.getElementById("resetRace");
-  const tryDemoBtn = document.getElementById("tryDemo");
   const speedControl = document.getElementById("speedControl");
   const speedValue = document.getElementById("speedValue");
   const winnerDisplay = document.getElementById("winner");
@@ -630,6 +628,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Start race with countdown
   function startRace() {
     try {
+      // If the name input is blank, fill it with the demo list
+      if (!nameInput.value.trim()) {
+        nameInput.value = sampleNames.join("\n");
+      }
+
       const names = parseNames();
 
       if (names.length < 2) {
@@ -648,8 +651,6 @@ document.addEventListener("DOMContentLoaded", () => {
       raceInProgress = true;
       raceCount++;
       startRaceBtn.disabled = true;
-      resetRaceBtn.disabled = true;
-      tryDemoBtn.disabled = true;
       speedControl.disabled = true;
       nameInput.disabled = true;
       winnerDisplay.style.display = "none";
@@ -666,8 +667,8 @@ document.addEventListener("DOMContentLoaded", () => {
       countdownDisplay();
     } catch (error) {
       console.error("Error starting race:", error);
-      alert("An error occurred while starting the race. Please try again.");
-      resetRace();
+      alert("An error occurred while starting the race. Please refresh the page and try again.");
+      cleanupRace();
     }
   }
 
@@ -766,8 +767,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function endRace() {
     raceInProgress = false;
     startRaceBtn.disabled = false;
-    resetRaceBtn.disabled = false;
-    tryDemoBtn.disabled = false;
     speedControl.disabled = false;
     nameInput.disabled = false;
 
@@ -859,61 +858,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 50);
   }
 
-  // Reset race
-  function resetRace() {
+  // Error handling cleanup function
+  function cleanupRace() {
     if (raceInterval) {
       clearInterval(raceInterval);
     }
 
     raceInProgress = false;
     startRaceBtn.disabled = false;
-    resetRaceBtn.disabled = false;
-    tryDemoBtn.disabled = false;
     speedControl.disabled = false;
     nameInput.disabled = false;
     winnerDisplay.style.display = "none";
     winnerDisplay.classList.remove("show");
     countdownOverlay.style.display = "none";
 
-    // Reset racers
-    participants.forEach((participant, index) => {
-      participant.x = 20; // Match the initial car position
-      participant.nameOffset = 0;
-      participant.finished = false; // Reset finished state
-
-      const racer = document.getElementById(`racer-${index}`);
-      if (racer) {
-        const carContainer = racer.querySelector(".car-container");
-        if (carContainer) {
-          // Ensure car position is reset immediately
-          carContainer.style.transition = "none";
-          carContainer.style.left = "20px";
-          // Restore transition after a brief delay
-          setTimeout(() => {
-            carContainer.style.transition = "left 0.1s linear";
-          }, 50);
-        }
-        racer.classList.remove("running", "winner");
-      }
-
-      // Reset name position
-      const nameLabel = document.getElementById(`name-${index}`);
-      if (nameLabel) {
-        nameLabel.style.left = "-40px";
-      }
-
-      // Reset tether
-      const tether = document.getElementById(`tether-${index}`);
-      if (tether) {
-        tether.style.width = "10px";
-      }
-    });
-
     // Remove dust particles
     document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
-
-    // Update tethers
-    updateTethersAndNames();
   }
 
   // Load saved names if available
@@ -982,8 +942,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Event listeners
   startRaceBtn.addEventListener("click", startRace);
-  resetRaceBtn.addEventListener("click", resetRace);
-  tryDemoBtn.addEventListener("click", loadDemoNames);
 
   // Add clear history button event listener if it exists
   const clearHistoryBtn = document.getElementById("clearHistory");
@@ -995,8 +953,8 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("error", function (e) {
     console.error("Runtime error:", e.message);
     if (raceInProgress) {
-      alert("An error occurred. The race has been reset.");
-      resetRace();
+      alert("An error occurred. Please refresh the page to start a new race.");
+      cleanupRace();
     }
   });
 
