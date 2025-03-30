@@ -1,4 +1,17 @@
+
+// Helper function to get ordinal suffix for numbers (1st, 2nd, 3rd, etc.)
+function getOrdinalSuffix(num) {
+  const j = num % 10;
+  const k = num % 100;
+  if (j == 1 && k != 11) return "st";
+  if (j == 2 && k != 12) return "nd";
+  if (j == 3 && k != 13) return "rd";
+  return "th";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM Content Loaded");
+  
   // DOM Elements
   const nameInput = document.getElementById("nameInput");
   const startRaceBtn = document.getElementById("startRace");
@@ -9,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const raceTrackContainer = document.getElementById("raceTrackContainer");
   const raceLanes = document.getElementById("raceLanes");
   const countdownOverlay = document.getElementById("countdownOverlay");
+  const showLoserCheckbox = document.getElementById("showLoser");
 
   // Race variables
   let participants = [];
@@ -18,11 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let countdown = 3;
   let animationId = null;
   let raceInterval = null;
+  let finishOrder = []; // Track order of finished cars
 
   // Constants
-  const FINISH_LINE = raceTrackContainer.clientWidth - 150; // Adjust to match the finish-line CSS position (right: 100px) accounting for car width
+  const FINISH_LINE = raceTrackContainer.clientWidth - 150;
   const MAX_PARTICIPANTS = 20;
-  const RACE_DURATION_BASE = 5000; // Base duration in ms
+  const RACE_DURATION_BASE = 5000;
 
   // Sample names
   const sampleNames = [
@@ -91,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
       throw new Error("No names entered");
     }
 
-    // Split by new line and filter out empty lines
     return rawInput
       .split("\n")
       .map((name) => name.trim())
@@ -123,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
         color,
         character: character.name,
         emoji: character.emoji,
-        x: 20, // Set initial X position to match CSS left value
+        x: 20,
         y: index * laneHeight + laneHeight / 2,
         speed: 0,
         baseSpeed: 1 + Math.random() * 0.5,
@@ -131,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         winning: index === selectedWinner,
         showPhrase: false,
         laneIndex: index,
-        nameOffset: 0, // Name offset for tethering effect
+        nameOffset: 0,
       };
 
       participants.push(participant);
@@ -145,12 +159,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const racer = document.createElement("div");
       racer.className = "racer";
       racer.id = `racer-${index}`;
-      racer.style.top = `${laneHeight / 2 - 25}px`; // Center vertically
+      racer.style.top = `${laneHeight / 2 - 25}px`;
 
       // Create a container for the car and animal
       const carContainer = document.createElement("div");
       carContainer.className = "car-container";
-      carContainer.style.left = "20px"; // Set initial position
+      carContainer.style.left = "20px";
 
       // Create car body
       const carBody = document.createElement("div");
@@ -185,8 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
       nameLabel.textContent = name;
 
       // Position name label initially
-      nameLabel.style.left = "-40px"; // Start slightly behind the car
-      nameLabel.style.top = "50%"; // Center vertically
+      nameLabel.style.left = "-40px";
+      nameLabel.style.top = "50%";
 
       // Assemble car
       carBody.appendChild(frontWheel);
@@ -202,7 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Assemble car container
       carContainer.appendChild(avatarContainer);
 
-      // Assemble racer - add tether and name to lane instead of directly to racer
+      // Assemble racer
       racer.appendChild(carContainer);
       lane.appendChild(racer);
       lane.appendChild(tether);
@@ -212,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
       raceLanes.appendChild(lane);
     });
 
-    // Add background elements instead of clouds
+    // Add background elements
     createBackgroundElements();
 
     // Initial positioning of names and tethers
@@ -222,164 +236,63 @@ document.addEventListener("DOMContentLoaded", () => {
   // Calculate lane height based on participant count
   function calculateLaneHeight(participantCount) {
     const containerHeight = raceTrackContainer.clientHeight;
-    const groundHeight = 15; // Height of the ground element
+    const groundHeight = 15;
     const usableHeight = containerHeight - groundHeight;
     return usableHeight / participantCount;
   }
 
   // Create background decorations
   function createBackgroundElements() {
-    // Remove existing background elements
-    document
-      .querySelectorAll(".background-element")
-      .forEach((element) => element.remove());
+    // Remove existing elements
+    document.querySelectorAll(".background-element").forEach(el => el.remove());
 
-    // Create a diverse set of background elements
-    const decorationTypes = [
-      // Trees and plants
-      { class: "bg-tree", emoji: "🌳", count: 3, zIndex: 1 },
-      { class: "bg-tree", emoji: "🌲", count: 2, zIndex: 1 },
-      { class: "bg-tree", emoji: "🌴", count: 2, zIndex: 1 },
-      { class: "bg-tree", emoji: "🪴", count: 2, zIndex: 1 },
-      { class: "bg-bush", emoji: "🌿", count: 3, zIndex: 1 },
-      { class: "bg-bush", emoji: "🌵", count: 2, zIndex: 1 },
-      { class: "bg-bush", emoji: "☘️", count: 3, zIndex: 1 },
-
-      // Flowers
-      { class: "bg-flower", emoji: "🌸", count: 2, zIndex: 1 },
-      { class: "bg-flower", emoji: "🌺", count: 2, zIndex: 1 },
-      { class: "bg-flower", emoji: "🌼", count: 2, zIndex: 1 },
-      { class: "bg-flower", emoji: "🌻", count: 2, zIndex: 1 },
-      { class: "bg-flower", emoji: "🌷", count: 3, zIndex: 1 },
-
-      // Buildings and structures
-      { class: "bg-structure", emoji: "🏠", count: 1, zIndex: 1 },
-      { class: "bg-structure", emoji: "🏡", count: 1, zIndex: 1 },
-      { class: "bg-structure", emoji: "⛱️", count: 2, zIndex: 1 },
-      { class: "bg-structure", emoji: "🚩", count: 3, zIndex: 2 },
-      { class: "bg-structure", emoji: "🏁", count: 2, zIndex: 2 },
-
-      // Spectators and crowd elements
-      { class: "bg-spectator", emoji: "👨‍👩‍👧‍👦", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "👨‍👩‍👧", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "👩‍👦", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "👏", count: 3, zIndex: 2 },
-      { class: "bg-spectator", emoji: "🙌", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "🎉", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "📸", count: 2, zIndex: 2 },
-      { class: "bg-spectator", emoji: "📱", count: 2, zIndex: 2 },
-
-      // Animals and wildlife
-      { class: "bg-animal", emoji: "🦆", count: 2, zIndex: 3 },
-      { class: "bg-animal", emoji: "🦅", count: 1, zIndex: 3 },
-      { class: "bg-animal", emoji: "🦋", count: 3, zIndex: 3 },
-      { class: "bg-animal", emoji: "🐿️", count: 2, zIndex: 3 },
-
-      // Misc environment elements
-      { class: "bg-misc", emoji: "⛅", count: 2, zIndex: 0 },
-      { class: "bg-misc", emoji: "☁️", count: 2, zIndex: 0 },
-      { class: "bg-misc", emoji: "🪨", count: 3, zIndex: 1 },
+    // Create decorative elements
+    const decorations = [
+      { emoji: "🌳", count: 5, class: "tree", yRange: [30, 70] },
+      { emoji: "🌺", count: 4, class: "flower", yRange: [60, 80] },
+      { emoji: "⛅", count: 3, class: "cloud", yRange: [10, 30] },
+      { emoji: "👥", count: 6, class: "spectator", yRange: [50, 90] }
     ];
 
-    // Define different regions for placement
-    const regions = [
-      {
-        name: "sky",
-        top: 5,
-        bottom: 100,
-        left: 0,
-        right: 100,
-        elements: ["bg-misc"],
-      },
-      {
-        name: "background",
-        top: 30,
-        bottom: 180,
-        left: 0,
-        right: 100,
-        elements: ["bg-tree", "bg-structure"],
-      },
-      {
-        name: "midground",
-        top: 80,
-        bottom: 300,
-        left: 20,
-        right: 80,
-        elements: ["bg-bush", "bg-flower", "bg-animal"],
-      },
-      {
-        name: "foreground",
-        top: 150,
-        bottom: 450,
-        left: 30,
-        right: 90,
-        elements: ["bg-spectator", "bg-animal"],
-      },
-    ];
-
-    decorationTypes.forEach((type) => {
-      // Find the appropriate regions for this element type
-      const validRegions = regions.filter((region) =>
-        region.elements.some((className) => type.class.includes(className))
-      );
-
-      if (validRegions.length === 0) return;
-
-      for (let i = 0; i < type.count; i++) {
+    decorations.forEach(decoration => {
+      for (let i = 0; i < decoration.count; i++) {
         const element = document.createElement("div");
-        element.className = `background-element ${type.class}`;
-        element.textContent = type.emoji;
-        element.style.zIndex = type.zIndex;
-
-        // Select a random region from valid regions
-        const region =
-          validRegions[Math.floor(Math.random() * validRegions.length)];
-
-        // Calculate position within the region
-        const heightRange = region.bottom - region.top;
-        const widthRange = region.right - region.left;
-
-        element.style.top = `${region.top + Math.random() * heightRange}px`;
-
-        const leftPos = region.left + Math.random() * widthRange;
-        element.style.left = `${leftPos}%`;
-
-        // Add some randomness to size
-        let scale = 0.7 + Math.random() * 0.6;
-
-        // Make distant objects smaller
-        if (region.name === "background" || region.name === "sky") {
-          scale *= 0.8;
-        } else if (region.name === "foreground") {
-          scale *= 1.2;
-        }
-
-        element.style.transform = `scale(${scale})`;
-
-        // Add to container
+        element.className = `background-element ${decoration.class}`;
+        element.textContent = decoration.emoji;
+        element.style.cssText = `
+          position: absolute;
+          left: ${Math.random() * 90}%;
+          top: ${decoration.yRange[0] + Math.random() * (decoration.yRange[1] - decoration.yRange[0])}%;
+          font-size: ${1 + Math.random()}em;
+          opacity: 0.8;
+          transform: scale(${0.8 + Math.random() * 0.4});
+          animation: float ${5 + Math.random() * 5}s infinite alternate ease-in-out;
+          z-index: ${decoration.class === 'cloud' ? 0 : 1};
+        `;
         raceTrackContainer.appendChild(element);
       }
     });
 
-    // Add a few moving elements (birds, butterflies)
-    const movingElements = [
-      { emoji: "🦋", class: "bg-moving butterfly", count: 3 },
-      { emoji: "🐦", class: "bg-moving bird", count: 2 },
+    // Add animated elements
+    const animatedElements = [
+      { emoji: "🦋", class: "butterfly", count: 2 },
+      { emoji: "🐦", class: "bird", count: 2 }
     ];
 
-    movingElements.forEach((type) => {
+    animatedElements.forEach(type => {
       for (let i = 0; i < type.count; i++) {
         const element = document.createElement("div");
         element.className = `background-element ${type.class}`;
         element.textContent = type.emoji;
-
-        // Random starting position
-        element.style.top = `${20 + Math.random() * 150}px`;
-        element.style.left = `${Math.random() * 90}%`;
-
-        // Random animation delay
-        element.style.animationDelay = `${Math.random() * 5}s`;
-
+        element.style.cssText = `
+          position: absolute;
+          left: ${Math.random() * 90}%;
+          top: ${20 + Math.random() * 40}%;
+          font-size: 1.2em;
+          z-index: 2;
+          animation: fly${type.class} ${10 + Math.random() * 5}s infinite linear;
+          animation-delay: ${Math.random() * 5}s;
+        `;
         raceTrackContainer.appendChild(element);
       }
     });
@@ -400,30 +313,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const carRect = carContainer.getBoundingClientRect();
     const containerRect = raceTrackContainer.getBoundingClientRect();
 
-    // Position dust particles behind the car at exhaust level
     dust.style.left = `${
       carRect.left - containerRect.left - 10 + Math.random() * 4
     }px`;
     dust.style.top = `${
-      carRect.top - containerRect.top + carRect.height / 2 + 5 // Adjusted to wheel level
+      carRect.top - containerRect.top + carRect.height / 2 + 5
     }px`;
 
-    // Add size variation
     const size = 3 + Math.random() * 7;
     dust.style.width = `${size}px`;
     dust.style.height = `${size}px`;
 
-    // Add color variation for exhaust
     const opacity = 0.3 + Math.random() * 0.3;
     dust.style.backgroundColor = `rgba(150, 150, 150, ${opacity})`;
 
-    // Add to container
     raceTrackContainer.appendChild(dust);
 
-    // Add fading animation
     dust.style.transition = "all 0.3s ease-out";
 
-    // Apply the animation after a tiny delay to ensure transition works
     setTimeout(() => {
       dust.style.transform = `translate(-${10 + Math.random() * 15}px, -${
         Math.random() * 10
@@ -431,7 +338,6 @@ document.addEventListener("DOMContentLoaded", () => {
       dust.style.opacity = "0";
     }, 10);
 
-    // Remove after animation
     setTimeout(() => {
       dust.remove();
     }, 350);
@@ -454,18 +360,13 @@ document.addEventListener("DOMContentLoaded", () => {
         .querySelectorAll(".race-lane")
         [index].getBoundingClientRect();
 
-      // Calculate name position - it should lag behind the car
-      // The further the car has moved, the further behind the name should be (up to a limit)
-      const nameOffsetMax = 120; // Maximum distance the name can lag behind
-      const followerSpeed = 0.93; // How quickly the name follows (0-1), lower is slower
+      const nameOffsetMax = 120;
+      const followerSpeed = 0.93;
 
-      // If car has finished, ensure name and tether align properly with finish line
       if (participant.finished) {
-        // Set name position to be a fixed distance behind the finish line
         const nameX = FINISH_LINE - nameOffsetMax;
         nameLabel.style.left = `${nameX}px`;
 
-        // Update tether position to connect name to car at finish line
         const nameLabelRect = nameLabel.getBoundingClientRect();
         const nameWidth = nameLabelRect.width;
 
@@ -477,25 +378,20 @@ document.addEventListener("DOMContentLoaded", () => {
         tether.style.top = `${carCenterY - laneRect.top}px`;
         tether.style.width = `${tetherLength}px`;
       } else if (!raceInProgress && participant.x <= 20) {
-        // Reset position - for when the race hasn't started or has been reset
         nameLabel.style.left = `-40px`;
         tether.style.left = `0px`;
         tether.style.top = `${carCenterY - laneRect.top}px`;
         tether.style.width = `10px`;
       } else {
-        // Update the follower offset based on car speed
         participant.nameOffset = Math.min(
           participant.nameOffset + (1 - followerSpeed) * (participant.x / 15),
           nameOffsetMax
         );
 
-        // Calculate name position
         const nameX = Math.max(20, participant.x - participant.nameOffset);
 
-        // Position name element
         nameLabel.style.left = `${nameX}px`;
 
-        // Update tether position and rotation
         const nameLabelRect = nameLabel.getBoundingClientRect();
         const nameWidth = nameLabelRect.width;
 
@@ -512,123 +408,173 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Animate the race
   function animateRace() {
-    // Check if all participants have finished
     const allFinished = participants.every((p) => p.finished);
     if (allFinished) {
-      endRace();
+      // endRace();
       clearInterval(raceInterval);
       return;
     }
 
-    // Calculate race progress factor based on speed control
-    // Inverted so lower values = slower race
+    // Sort participants by position to determine current places
+    // First get finished participants in their finish order
+    const sortedFinished = finishOrder.map(index => participants[index]);
+    
+    // Then sort running participants by current position
+    const runningParticipants = participants.filter(p => !p.finished);
+    const sortedRunning = [...runningParticipants].sort((a, b) => b.x - a.x);
+    
+    // Combine finished and running participants
+    const sortedByPosition = [...sortedFinished, ...sortedRunning];
+    
+    console.log('Race Status:', {
+      finishOrder,
+      finishedParticipants: sortedFinished.map(p => ({
+        name: p.name,
+        position: finishOrder.indexOf(p.laneIndex) + 1,
+        x: p.x,
+        laneIndex: p.laneIndex
+      })),
+      runningParticipants: sortedRunning.map(p => ({
+        name: p.name,
+        x: p.x,
+        laneIndex: p.laneIndex
+      }))
+    });
+    
+    sortedByPosition.forEach((participant, place) => {
+      const racer = document.getElementById(`racer-${participant.laneIndex}`);
+      if (!racer) return;
+
+      // Update place labels
+      let placeLabel = racer.querySelector('.place-label');
+      if (!placeLabel) {
+        placeLabel = document.createElement('div');
+        placeLabel.className = 'place-label';
+        placeLabel.style.cssText = `
+          position: absolute;
+          right: -60px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+          color: white;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 14px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          min-width: 35px;
+          text-align: center;
+          font-family: 'Montserrat', sans-serif;
+          z-index: 20;
+          animation: pulsePlace 2s infinite;
+        `;
+        racer.appendChild(placeLabel);
+      }
+      placeLabel.textContent = `${place + 1}${getOrdinalSuffix(place + 1)}`;
+    });
+
     const raceFactor = 1 - speedControl.value / 100;
 
-    // Update all racer positions
     participants.forEach((participant, index) => {
       if (participant.finished) return;
 
       const racer = document.getElementById(`racer-${index}`);
       if (!racer) return;
 
-      // Add running class for animation
       racer.classList.add("running");
 
-      // Calculate speed and acceleration
-      let maxSpeed = 5; // Max speed in pixels per frame
-
-      // Apply global slowdown factor (3 times slower)
+      let maxSpeed = 5;
       maxSpeed = maxSpeed / 3;
 
-      // Adjust speed for the predetermined winner
       if (participant.winning) {
-        // Ensure the winner makes progress but doesn't always lead
-        // This creates race drama
         const winningFactor = 1.05 + Math.random() * 0.1;
         maxSpeed *= winningFactor;
 
-        // Ensure winner accelerates towards the end
         const raceProgress = participant.x / FINISH_LINE;
         if (raceProgress > 0.7) {
           maxSpeed *= 1.1;
         }
       } else {
-        // Non-winners have varied speeds
         maxSpeed *= participant.baseSpeed;
 
-        // Add random bursts of speed to create excitement
         if (Math.random() < 0.05) {
           maxSpeed *= 1.5;
         }
 
-        // Apply catch-up mechanics for racers falling behind
         const leader = participants.reduce((prev, curr) =>
           prev.x > curr.x ? prev : curr
         );
 
         if (leader.x - participant.x > FINISH_LINE * 0.3) {
-          maxSpeed *= 1.2; // Boost trailing racers
+          maxSpeed *= 1.2;
         }
       }
 
-      // Apply race factor (from speed control)
       maxSpeed *= 1 - raceFactor * 0.8;
 
-      // Apply some randomness
       const randomFactor = 0.8 + Math.random() * 0.4;
       const speed = maxSpeed * randomFactor;
 
-      // Update position
       participant.x += speed;
 
-      // Update racer element position
       const carContainer = racer.querySelector(".car-container");
       if (carContainer) {
         carContainer.style.left = `${participant.x}px`;
       }
 
-      // Create dust effect occasionally
       if (Math.random() < 0.1) {
         createDust(index);
       }
 
-      // Check if finished
-      if (participant.x >= FINISH_LINE) {
+      if (participant.x >= FINISH_LINE && !participant.finished) {
         participant.finished = true;
-        participant.x = FINISH_LINE; // Set position exactly at finish line
+        participant.x = FINISH_LINE;
         const carContainer = racer.querySelector(".car-container");
         if (carContainer) {
           carContainer.style.left = `${FINISH_LINE}px`;
         }
-        racer.classList.remove("running"); // Stop the running animation
+        racer.classList.remove("running");
+        
+        // Add to finish order if not already there
+        if (!finishOrder.includes(participant.laneIndex)) {
+          finishOrder.push(participant.laneIndex);
+          console.log('Car Finished:', {
+            name: participant.name,
+            position: finishOrder.length,
+            laneIndex: participant.laneIndex,
+            x: participant.x,
+            finishOrder,
+            allParticipants: participants.map(p => ({
+              name: p.name,
+              finished: p.finished,
+              x: p.x,
+              laneIndex: p.laneIndex
+            }))
+          });
+        }
 
-        // If this is the first car to finish and it's not the predetermined winner,
-        // update the winning status for all participants
         if (
           !participant.winning &&
           participants.filter((p) => p.finished).length === 1
         ) {
-          // Update all participants winning status
           participants.forEach((p, idx) => {
             p.winning = idx === index;
           });
         }
 
-        // Check if this is the winner
         if (participant.winning) {
           racer.classList.add("winner");
         }
       }
     });
 
-    // Update tethers and name positions
     updateTethersAndNames();
   }
 
   // Start race with countdown
   function startRace() {
+    console.log("Starting race...");
     try {
-      // If the name input is blank, fill it with the demo list
+      console.log("Current participants:", nameInput.value);
       if (!nameInput.value.trim()) {
         nameInput.value = sampleNames.join("\n");
       }
@@ -647,7 +593,6 @@ document.addEventListener("DOMContentLoaded", () => {
         names.splice(MAX_PARTICIPANTS);
       }
 
-      // Initialize race
       raceInProgress = true;
       raceCount++;
       startRaceBtn.disabled = true;
@@ -656,13 +601,11 @@ document.addEventListener("DOMContentLoaded", () => {
       winnerDisplay.style.display = "none";
       winnerDisplay.classList.remove("show");
 
-      // Save names to localStorage
       saveNames();
+      finishOrder = []; // Reset finish order for new race
 
-      // Setup the race
       initializeParticipants(names);
 
-      // Start countdown
       countdown = 3;
       countdownDisplay();
     } catch (error) {
@@ -684,34 +627,26 @@ document.addEventListener("DOMContentLoaded", () => {
       countdownOverlay.textContent = "GO!";
       setTimeout(() => {
         countdownOverlay.style.display = "none";
-
-        // Start the race animation interval
-        raceInterval = setInterval(animateRace, 48); // Change from 16ms (~60fps) to 48ms (~20fps)
+        raceInterval = setInterval(animateRace, 48);
       }, 1000);
     }
   }
 
   // Calculate color brightness
   function getColorBrightness(hex) {
-    // Remove # if present
     hex = hex.replace("#", "");
-
-    // Convert to RGB
     const r = parseInt(hex.substr(0, 2), 16);
     const g = parseInt(hex.substr(2, 2), 16);
     const b = parseInt(hex.substr(4, 2), 16);
-
-    // Calculate brightness
     return (r * 299 + g * 587 + b * 114) / 1000;
   }
 
   // Create confetti for celebration
   function playCelebrationEffect() {
-    // Add 50 confetti particles
     for (let i = 0; i < 50; i++) {
       setTimeout(() => {
         createConfetti();
-      }, i * 50); // Stagger creation
+      }, i * 50);
     }
   }
 
@@ -726,7 +661,6 @@ document.addEventListener("DOMContentLoaded", () => {
     confetti.style.borderRadius = "50%";
     confetti.style.zIndex = "10";
 
-    // Position randomly around the winner display
     const rect = winnerDisplay.getBoundingClientRect();
     const winX = rect.left + rect.width / 2;
     const winY = rect.top + rect.height / 2;
@@ -737,122 +671,57 @@ document.addEventListener("DOMContentLoaded", () => {
     confetti.style.left = `${startX}px`;
     confetti.style.top = `${startY}px`;
 
-    // Add to document
     document.body.appendChild(confetti);
 
-    // Animate falling
     const fallDuration = 1000 + Math.random() * 3000;
     const fallDelay = Math.random() * 500;
 
     confetti.style.transition = `top ${fallDuration}ms ease-in ${fallDelay}ms, 
-                               left ${fallDuration}ms ease-out ${fallDelay}ms,
-                               opacity ${fallDuration * 0.5}ms ease-in ${
+                              left ${fallDuration}ms ease-out ${fallDelay}ms,
+                              opacity ${fallDuration * 0.5}ms ease-in ${
       fallDuration * 0.5 + fallDelay
     }ms`;
 
     setTimeout(() => {
-      // Random final position
       confetti.style.top = `${winY + 300 + Math.random() * 100}px`;
       confetti.style.left = `${startX + (Math.random() * 200 - 100)}px`;
       confetti.style.opacity = "0";
 
-      // Remove after animation
       setTimeout(() => {
         confetti.remove();
       }, fallDuration + fallDelay);
     }, 10);
   }
 
-  // End race and display winner
-  function endRace() {
-    raceInProgress = false;
-    startRaceBtn.disabled = false;
-    speedControl.disabled = false;
-    nameInput.disabled = false;
-
-    // Find actual winner - the first car to finish
-    const finishedParticipants = participants.filter((p) => p.finished);
-    let winner;
-
-    if (finishedParticipants.length > 0) {
-      // Use the first finisher as the winner
-      const winnerIndex = participants.findIndex((p) => p.winning);
-
-      if (winnerIndex >= 0) {
-        winner = participants[winnerIndex];
-
-        // Ensure we mark the correct car as winner visually
-        participants.forEach((p, idx) => {
-          const racer = document.getElementById(`racer-${idx}`);
-          if (racer) {
-            if (idx === winnerIndex) {
-              racer.classList.add("winner");
-            } else {
-              racer.classList.remove("winner");
-            }
-          }
-        });
-      } else {
-        // Fallback to the predetermined winner if somehow no winning flag is set
-        winner = participants[selectedWinner];
-      }
-    } else {
-      // If no cars finished (shouldn't happen), use the predetermined winner
-      winner = participants[selectedWinner];
-    }
-
-    // Display winner
-    winnerDisplay.textContent = `Winner: ${winner.name}! 🏆`;
-    winnerDisplay.style.backgroundColor = winner.color;
-
-    // Ensure text has good contrast with background
-    const brightness = getColorBrightness(winner.color);
-    winnerDisplay.style.color = brightness > 128 ? "#000" : "#fff";
-    winnerDisplay.style.display = "block";
-
-    // Add to results history
-    const timestamp = new Date().toLocaleString();
-    addResultToHistory(winner.name, winner.color, winner.character, timestamp);
-
-    // Add celebration animation
-    setTimeout(() => {
-      winnerDisplay.classList.add("show");
-      playCelebrationEffect();
-    }, 100);
-  }
-
   // Add result to history display
   function addResultToHistory(
-    winnerName,
+    participantName,
     color,
     character,
     timestamp,
+    isLoser = false,
     save = true
   ) {
     const resultElement = document.createElement("div");
     resultElement.className = "result-item";
 
-    // Get emoji for the character type
     const characterObj = characterSet.find((c) => c.name === character);
     const emoji = characterObj?.emoji || "🏃";
 
     resultElement.innerHTML = `
       <div class="result-color" style="background-color: ${color}">${emoji}</div>
       <div class="result-info">
-        <div class="result-winner">${winnerName}</div>
+        <div class="result-winner">${isLoser ? '🐢 ' : '🏆 '}${participantName}</div>
         <div class="result-time">${timestamp}</div>
       </div>
     `;
 
-    // Add to results list
     resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
 
-    // Save to localStorage if this is a new result
     if (save) {
-      saveRaceResult(winnerName, color, character);
+      saveRaceResult(participantName, color, character, isLoser);
     }
 
-    // Add fade-in animation
     setTimeout(() => {
       resultElement.classList.add("visible");
     }, 50);
@@ -872,7 +741,6 @@ document.addEventListener("DOMContentLoaded", () => {
     winnerDisplay.classList.remove("show");
     countdownOverlay.style.display = "none";
 
-    // Remove dust particles
     document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
   }
 
@@ -891,10 +759,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const results = JSON.parse(savedResults);
       results.forEach((result) => {
         addResultToHistory(
-          result.winner,
+          result.participant,
           result.color,
           result.character,
           result.timestamp,
+          result.isLoser,
           false
         );
       });
@@ -907,11 +776,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Save race result to localStorage
-  function saveRaceResult(winner, color, character) {
+  function saveRaceResult(participant, color, character, isLoser) {
     const result = {
-      winner,
+      participant,
       color,
       character,
+      isLoser,
       timestamp: new Date().toLocaleString(),
     };
 
@@ -941,15 +811,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Event listeners
-  startRaceBtn.addEventListener("click", startRace);
+  console.log("Setting up event listeners");
+  startRaceBtn.addEventListener("click", () => {
+    console.log("Start Race button clicked");
+    startRace();
+  });
 
-  // Add clear history button event listener if it exists
   const clearHistoryBtn = document.getElementById("clearHistory");
   if (clearHistoryBtn) {
     clearHistoryBtn.addEventListener("click", clearHistory);
   }
 
-  // Add error handling for animations
   window.addEventListener("error", function (e) {
     console.error("Runtime error:", e.message);
     if (raceInProgress) {
@@ -958,7 +830,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Adjust racetrack container on window resize
   window.addEventListener("resize", () => {
     if (participants.length > 0) {
       const laneHeight = calculateLaneHeight(participants.length);

@@ -632,8 +632,8 @@ input[type="range"]:disabled {
   z-index: 4;
 }
 
-/* Name tag styling */
-.racer-name {
+/* Name tag and place label styling */
+.racer-name, .place-label {
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--grey-800);
@@ -649,7 +649,27 @@ input[type="range"]:disabled {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: absolute;
   transform: translateY(-50%);
+}
+
+.racer-name {
   z-index: 5;
+}
+
+.place-label {
+  right: -50px;
+  z-index: 20;
+  min-width: 35px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  font-weight: 600;
+  border: none;
+  animation: pulsePlace 2s infinite;
+}
+
+@keyframes pulsePlace {
+  0% { transform: translateY(-50%) scale(1); }
+  50% { transform: translateY(-50%) scale(1.1); }
+  100% { transform: translateY(-50%) scale(1); }
 }
 
 /* Tether rope styling */
@@ -700,15 +720,70 @@ input[type="range"]:disabled {
   background-color: #95e495;
 }
 
+/* Race Track Background */
+.race-track-container {
+  background: linear-gradient(to bottom,
+    #87CEEB 0%,   /* Sky blue */
+    #B0E0E6 50%,  /* Powder blue */
+    #98FB98 100%  /* Pale green */
+  );
+  overflow: hidden;
+  position: relative;
+}
+
 /* Background elements */
 .background-element {
   position: absolute;
   font-size: 1.8rem;
   z-index: 1;
   transition: transform 0.3s ease-in-out;
-  opacity: 0.5;
+  opacity: 0.8;
   text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  pointer-events: none; /* Don't interfere with clicks */
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes float {
+  0% { transform: translateY(0) rotate(0deg); }
+  100% { transform: translateY(-10px) rotate(5deg); }
+}
+
+@keyframes flybutterfly {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  25% { transform: translate(100px, -20px) rotate(10deg); }
+  50% { transform: translate(200px, 0) rotate(-10deg); }
+  75% { transform: translate(100px, 20px) rotate(10deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes flybird {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(200px, -30px) scale(0.8); }
+  100% { transform: translate(400px, 0) scale(0.6); opacity: 0; }
+}
+
+.tree {
+  animation: float 3s infinite alternate ease-in-out;
+}
+
+.flower {
+  animation: float 4s infinite alternate ease-in-out;
+}
+
+.cloud {
+  animation: float 6s infinite alternate ease-in-out;
+}
+
+.spectator {
+  animation: float 2s infinite alternate ease-in-out;
+}
+
+.butterfly {
+  animation: flybutterfly 15s infinite;
+}
+
+.bird {
+  animation: flybird 10s infinite;
 }
 
 /* Trees are taller */
