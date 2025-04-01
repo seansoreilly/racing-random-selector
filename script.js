@@ -134,7 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const participant = {
         name,
         color,
-        character: character.name,
         emoji: character.emoji,
         x: 20,
         y: index * laneHeight + laneHeight / 2,
@@ -408,25 +407,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // Animate the race
   function animateRace() {
     const allFinished = participants.every((p) => p.finished);
-    if (allFinished) {
+    if (allFinished && finishOrder.length > 0) {
+      console.log('Race completed, all participants finished');
       clearInterval(raceInterval);
       raceInterval = null;
-      // Enable start button but keep positions visible
-      startRaceBtn.disabled = false;
-      speedControl.disabled = false;
-      nameInput.disabled = false;
       raceInProgress = false;
 
-      // Display first and last position
-      const firstPlace = participants[finishOrder[0]];
+      // Get first and last place
+      const winner = participants[finishOrder[0]];
       const lastPlace = participants[finishOrder[finishOrder.length - 1]];
       
+      console.log('Race winners:', {
+        winner: {
+          name: winner.name,
+          color: winner.color,
+          emoji: winner.emoji
+        },
+        lastPlace: {
+          name: lastPlace.name,
+          emoji: lastPlace.emoji
+        }
+      });
+
+      // Create and display results
       const resultDisplay = document.createElement('div');
       resultDisplay.className = 'race-result-display';
       resultDisplay.innerHTML = `
         <div class="result-header">Race Results</div>
         <div class="position-display">
-          <div class="first-place">🥇 First: ${firstPlace.name} ${firstPlace.emoji}</div>
+          <div class="first-place">🥇 First: ${winner.name} ${winner.emoji}</div>
           <div class="last-place">Last: ${lastPlace.name} ${lastPlace.emoji}</div>
         </div>
       `;
@@ -435,6 +444,22 @@ document.addEventListener("DOMContentLoaded", () => {
       winnerDisplay.appendChild(resultDisplay);
       winnerDisplay.style.display = 'block';
       winnerDisplay.classList.add('show');
+      
+      // Add to race history
+      addResultToHistory(
+        winner.name,
+        winner.color,
+        winner.emoji,
+        new Date().toLocaleString()
+      );
+
+      // Enable controls after a short delay
+      setTimeout(() => {
+        startRaceBtn.disabled = false;
+        speedControl.disabled = false;
+        nameInput.disabled = false;
+        playCelebrationEffect();
+      }, 500);
       
       return;
     }
@@ -561,19 +586,17 @@ document.addEventListener("DOMContentLoaded", () => {
         // Add to finish order if not already there
         if (!finishOrder.includes(participant.laneIndex)) {
           finishOrder.push(participant.laneIndex);
-          console.log('Car Finished:', {
-            name: participant.name,
-            position: finishOrder.length,
-            laneIndex: participant.laneIndex,
-            x: participant.x,
-            finishOrder,
-            allParticipants: participants.map(p => ({
-              name: p.name,
-              finished: p.finished,
-              x: p.x,
-              laneIndex: p.laneIndex
-            }))
-          });
+          
+          // If this is the first finisher, they're the winner
+          if (finishOrder.length === 1) {
+            participant.winning = true;
+            racer.classList.add("winner");
+            console.log('Winner:', {
+              name: participant.name,
+              position: finishOrder.length,
+              laneIndex: participant.laneIndex
+            });
+          }
         }
 
         if (
@@ -738,29 +761,48 @@ document.addEventListener("DOMContentLoaded", () => {
     timestamp,
     save = true
   ) {
+    console.log('Adding result to history:', { participantName, color, character, timestamp });
+    
+    // Ensure results container exists and is visible
+    if (!resultsContainer) {
+      console.error('Results container not found');
+      return;
+    }
+  
+    // Make sure the results section is visible
+    const resultsSection = document.querySelector('.results-section');
+    if (resultsSection) {
+      resultsSection.style.display = 'block';
+    }
+  
     const resultElement = document.createElement("div");
     resultElement.className = "result-item";
-
+  
+    // Try to find character by name, or use the character string directly if it's an emoji
     const characterObj = characterSet.find((c) => c.name === character);
-    const emoji = characterObj?.emoji || "🏃";
-
+    const emoji = characterObj?.emoji || (character?.length === 2 ? character : "🏃");
+  
     resultElement.innerHTML = `
       <div class="result-color" style="background-color: ${color}">${emoji}</div>
       <div class="result-info">
-        <div class="result-winner">🏆 ${participantName}</div>
+        <div class="result-winner">🏆 ${participantName || "Unknown Racer"}</div>
         <div class="result-time">${timestamp}</div>
       </div>
     `;
-
+  
+    // Insert at the beginning of the container
     resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
-
+  
+    // Force a reflow to trigger the animation
+    resultElement.offsetHeight;
+  
+    // Add visible class after insertion
+    resultElement.classList.add("visible");
+    console.log('Result element added:', resultElement);
+  
     if (save) {
       saveRaceResult(participantName, color, character);
     }
-
-    setTimeout(() => {
-      resultElement.classList.add("visible");
-    }, 50);
   }
 
   // Error handling cleanup function
@@ -799,16 +841,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadRaceHistory() {
     const savedResults = localStorage.getItem("raceResults");
     if (savedResults) {
-      const results = JSON.parse(savedResults);
-      results.forEach((result) => {
-        addResultToHistory(
-          result.participant,
-          result.color,
-          result.character,
-          result.timestamp,
-          false
-        );
-      });
+      try {
+        const results = JSON.parse(savedResults);
+        results.forEach((result) => {
+          // result.character now contains the emoji directly
+          addResultToHistory(
+            result.participant || "Unknown Racer",
+            result.color || "#4f46e5",
+            result.character || "🏃", // Pass emoji directly
+            result.timestamp || new Date().toLocaleString(),
+            false
+          );
+        });
+      } catch (error) {
+        console.error("Error loading race history:", error);
+        localStorage.removeItem("raceResults"); // Clear corrupted data
+      }
     }
   }
 
@@ -816,25 +864,30 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveNames() {
     localStorage.setItem("raceNames", nameInput.value);
   }
-
   // Save race result to localStorage
-  function saveRaceResult(participant, color, character) {
+  function saveRaceResult(participant, color, emoji) {
+    // Ensure we have valid values for all fields
     const result = {
-      participant,
-      color,
-      character,
-      timestamp: new Date().toLocaleString(),
+      participant: participant || "Unknown Racer",
+      color: color || "#4f46e5",
+      character: emoji || "🏃", // Store the emoji directly
+      timestamp: new Date().toLocaleString()
     };
-
+  
     let results = [];
-    const savedResults = localStorage.getItem("raceResults");
-    if (savedResults) {
-      results = JSON.parse(savedResults);
+    try {
+      const savedResults = localStorage.getItem("raceResults");
+      if (savedResults) {
+        results = JSON.parse(savedResults);
+      }
+    } catch (error) {
+      console.error("Error parsing saved results:", error);
+      // Continue with empty results array
     }
-
+  
     results.push(result);
     localStorage.setItem("raceResults", JSON.stringify(results));
-
+  
     return result;
   }
 
