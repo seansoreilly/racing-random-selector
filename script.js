@@ -416,6 +416,26 @@ document.addEventListener("DOMContentLoaded", () => {
       speedControl.disabled = false;
       nameInput.disabled = false;
       raceInProgress = false;
+
+      // Display first and last position
+      const firstPlace = participants[finishOrder[0]];
+      const lastPlace = participants[finishOrder[finishOrder.length - 1]];
+      
+      const resultDisplay = document.createElement('div');
+      resultDisplay.className = 'race-result-display';
+      resultDisplay.innerHTML = `
+        <div class="result-header">Race Results</div>
+        <div class="position-display">
+          <div class="first-place">🥇 First: ${firstPlace.name} ${firstPlace.emoji}</div>
+          <div class="last-place">Last: ${lastPlace.name} ${lastPlace.emoji}</div>
+        </div>
+      `;
+      
+      winnerDisplay.innerHTML = '';
+      winnerDisplay.appendChild(resultDisplay);
+      winnerDisplay.style.display = 'block';
+      winnerDisplay.classList.add('show');
+      
       return;
     }
 

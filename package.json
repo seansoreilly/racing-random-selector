@@ -9,5 +9,8 @@
     "dependencies": {
         "@modelcontextprotocol/server-trello": "github:delorenj/mcp-server-trello",
         "express": "^4.18.3"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.51.1"
     }
 }
