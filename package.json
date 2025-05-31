@@ -1,11 +1,27 @@
 {
-    "name": "running-people-race",
+    "name": "racing-random-selector",
     "version": "1.0.0",
-    "description": "A racing animation web application",
+    "description": "A fun web application that selects random winners through exciting animated races",
     "main": "server.js",
     "scripts": {
         "start": "node server.js"
     },
+    "keywords": [
+        "random-selector",
+        "race-animation",
+        "winner-picker",
+        "web-app",
+        "javascript",
+        "html5",
+        "css3"
+    ],
+    "author": "Sean O'Reilly",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/seansoreilly/racing-random-selector.git"
+    },
+    "homepage": "https://www.racingrandomselector.top/",
     "dependencies": {
         "@modelcontextprotocol/server-trello": "github:delorenj/mcp-server-trello",
         "express": "^4.18.3"
