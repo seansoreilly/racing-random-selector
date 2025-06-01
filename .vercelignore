@@ -1,0 +1,8 @@
+node_modules
+server.js
+.git
+logs/
+changelog/
+*.md
+package-lock.json
+.vercel/cache 
