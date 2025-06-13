@@ -45,3 +45,8 @@ node_modules/
 *.bat
 *.ps1
 .package-lock.json
+
+.cursor/
+lib/
+changelog/
+

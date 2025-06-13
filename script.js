@@ -1,4 +1,3 @@
-
 // Helper function to get ordinal suffix for numbers (1st, 2nd, 3rd, etc.)
 function getOrdinalSuffix(num) {
   const j = num % 10;
@@ -9,9 +8,72 @@ function getOrdinalSuffix(num) {
   return "th";
 }
 
+// Build info functionality
+let buildInfo = null;
+
+async function fetchBuildInfo() {
+  try {
+    const response = await fetch("/api/build-info");
+    if (response.ok) {
+      buildInfo = await response.json();
+      console.log("Build info loaded:", buildInfo);
+      displayBuildInfo();
+    } else {
+      console.warn("Failed to fetch build info:", response.status);
+    }
+  } catch (error) {
+    console.warn("Error fetching build info:", error);
+  }
+}
+
+function displayBuildInfo() {
+  if (!buildInfo) return;
+
+  // Create build info display element
+  const buildInfoElement = document.createElement("div");
+  buildInfoElement.className = "build-info";
+  buildInfoElement.innerHTML = `
+    <div class="build-info-content">
+      Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="build-hash">${buildInfo.commitHash}</span>
+      <!-- Environment suffix removed to standardize display across environments -->
+    </div>
+  `;
+
+  // Add to footer
+  const footer = document.querySelector("footer");
+  if (footer) {
+    footer.appendChild(buildInfoElement);
+  }
+
+  // Add to console for debugging
+  console.log(`%c🔧 Build Info`, "color: #10b981; font-weight: bold;");
+  console.log(`Commit: ${buildInfo.commitHash}`);
+  console.log(`Environment: ${buildInfo.environment}`);
+  console.log(`Build Time: ${buildInfo.buildTime}`);
+  console.log(`Platform: ${buildInfo.platform}`);
+}
+
+function createDebugPanel() {
+  // Only show debug panel in non-production environments
+  if (buildInfo && !buildInfo.isProduction) {
+    const debugPanel = document.createElement("div");
+    debugPanel.className = "text-center";
+    debugPanel.innerHTML = `
+      <p class="text-sm text-gray-500">Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="font-mono text-gray-600">${
+        buildInfo.commitHash || "unknown"
+      }</span></p>
+    `;
+
+    document.body.appendChild(debugPanel);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM Content Loaded");
-  
+
+  // Fetch build info early
+  fetchBuildInfo();
+
   // DOM Elements
   const nameInput = document.getElementById("nameInput");
   const startRaceBtn = document.getElementById("startRace");
@@ -242,17 +304,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Create background decorations
   function createBackgroundElements() {
     // Remove existing elements
-    document.querySelectorAll(".background-element").forEach(el => el.remove());
+    document
+      .querySelectorAll(".background-element")
+      .forEach((el) => el.remove());
 
     // Create decorative elements
     const decorations = [
       { emoji: "🌳", count: 5, class: "tree", yRange: [30, 70] },
       { emoji: "🌺", count: 4, class: "flower", yRange: [60, 80] },
       { emoji: "⛅", count: 3, class: "cloud", yRange: [10, 30] },
-      { emoji: "👥", count: 6, class: "spectator", yRange: [50, 90] }
+      { emoji: "👥", count: 6, class: "spectator", yRange: [50, 90] },
     ];
 
-    decorations.forEach(decoration => {
+    decorations.forEach((decoration) => {
       for (let i = 0; i < decoration.count; i++) {
         const element = document.createElement("div");
         element.className = `background-element ${decoration.class}`;
@@ -260,12 +324,17 @@ document.addEventListener("DOMContentLoaded", () => {
         element.style.cssText = `
           position: absolute;
           left: ${Math.random() * 90}%;
-          top: ${decoration.yRange[0] + Math.random() * (decoration.yRange[1] - decoration.yRange[0])}%;
+          top: ${
+            decoration.yRange[0] +
+            Math.random() * (decoration.yRange[1] - decoration.yRange[0])
+          }%;
           font-size: ${1 + Math.random()}em;
           opacity: 0.8;
           transform: scale(${0.8 + Math.random() * 0.4});
-          animation: float ${5 + Math.random() * 5}s infinite alternate ease-in-out;
-          z-index: ${decoration.class === 'cloud' ? 0 : 1};
+          animation: float ${
+            5 + Math.random() * 5
+          }s infinite alternate ease-in-out;
+          z-index: ${decoration.class === "cloud" ? 0 : 1};
         `;
         raceTrackContainer.appendChild(element);
       }
@@ -274,10 +343,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add animated elements
     const animatedElements = [
       { emoji: "🦋", class: "butterfly", count: 2 },
-      { emoji: "🐦", class: "bird", count: 2 }
+      { emoji: "🐦", class: "bird", count: 2 },
     ];
 
-    animatedElements.forEach(type => {
+    animatedElements.forEach((type) => {
       for (let i = 0; i < type.count; i++) {
         const element = document.createElement("div");
         element.className = `background-element ${type.class}`;
@@ -288,7 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
           top: ${20 + Math.random() * 40}%;
           font-size: 1.2em;
           z-index: 2;
-          animation: fly${type.class} ${10 + Math.random() * 5}s infinite linear;
+          animation: fly${type.class} ${
+          10 + Math.random() * 5
+        }s infinite linear;
           animation-delay: ${Math.random() * 5}s;
         `;
         raceTrackContainer.appendChild(element);
@@ -408,7 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function animateRace() {
     const allFinished = participants.every((p) => p.finished);
     if (allFinished && finishOrder.length > 0) {
-      console.log('Race completed, all participants finished');
+      console.log("Race completed, all participants finished");
       clearInterval(raceInterval);
       raceInterval = null;
       raceInProgress = false;
@@ -416,22 +487,22 @@ document.addEventListener("DOMContentLoaded", () => {
       // Get first and last place
       const winner = participants[finishOrder[0]];
       const lastPlace = participants[finishOrder[finishOrder.length - 1]];
-      
-      console.log('Race winners:', {
+
+      console.log("Race winners:", {
         winner: {
           name: winner.name,
           color: winner.color,
-          emoji: winner.emoji
+          emoji: winner.emoji,
         },
         lastPlace: {
           name: lastPlace.name,
-          emoji: lastPlace.emoji
-        }
+          emoji: lastPlace.emoji,
+        },
       });
 
       // Create and display results
-      const resultDisplay = document.createElement('div');
-      resultDisplay.className = 'race-result-display';
+      const resultDisplay = document.createElement("div");
+      resultDisplay.className = "race-result-display";
       resultDisplay.innerHTML = `
         <div class="result-header">Race Results</div>
         <div class="position-display">
@@ -439,12 +510,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="last-place">Last: ${lastPlace.name} ${lastPlace.emoji}</div>
         </div>
       `;
-      
-      winnerDisplay.innerHTML = '';
+
+      winnerDisplay.innerHTML = "";
       winnerDisplay.appendChild(resultDisplay);
-      winnerDisplay.style.display = 'block';
-      winnerDisplay.classList.add('show');
-      
+      winnerDisplay.style.display = "block";
+      winnerDisplay.classList.add("show");
+
       // Add to race history
       addResultToHistory(
         winner.name,
@@ -460,45 +531,45 @@ document.addEventListener("DOMContentLoaded", () => {
         nameInput.disabled = false;
         playCelebrationEffect();
       }, 500);
-      
+
       return;
     }
 
     // Sort participants by position to determine current places
     // First get finished participants in their finish order
-    const sortedFinished = finishOrder.map(index => participants[index]);
-    
+    const sortedFinished = finishOrder.map((index) => participants[index]);
+
     // Then sort running participants by current position
-    const runningParticipants = participants.filter(p => !p.finished);
+    const runningParticipants = participants.filter((p) => !p.finished);
     const sortedRunning = [...runningParticipants].sort((a, b) => b.x - a.x);
-    
+
     // Combine finished and running participants
     const sortedByPosition = [...sortedFinished, ...sortedRunning];
-    
-    console.log('Race Status:', {
+
+    console.log("Race Status:", {
       finishOrder,
-      finishedParticipants: sortedFinished.map(p => ({
+      finishedParticipants: sortedFinished.map((p) => ({
         name: p.name,
         position: finishOrder.indexOf(p.laneIndex) + 1,
         x: p.x,
-        laneIndex: p.laneIndex
+        laneIndex: p.laneIndex,
       })),
-      runningParticipants: sortedRunning.map(p => ({
+      runningParticipants: sortedRunning.map((p) => ({
         name: p.name,
         x: p.x,
-        laneIndex: p.laneIndex
-      }))
+        laneIndex: p.laneIndex,
+      })),
     });
-    
+
     sortedByPosition.forEach((participant, place) => {
       const racer = document.getElementById(`racer-${participant.laneIndex}`);
       if (!racer) return;
 
       // Update place labels
-      let placeLabel = racer.querySelector('.place-label');
+      let placeLabel = racer.querySelector(".place-label");
       if (!placeLabel) {
-        placeLabel = document.createElement('div');
-        placeLabel.className = 'place-label';
+        placeLabel = document.createElement("div");
+        placeLabel.className = "place-label";
         placeLabel.style.cssText = `
           position: absolute;
           right: -60px;
@@ -582,19 +653,19 @@ document.addEventListener("DOMContentLoaded", () => {
           carContainer.style.left = `${FINISH_LINE}px`;
         }
         racer.classList.remove("running");
-        
+
         // Add to finish order if not already there
         if (!finishOrder.includes(participant.laneIndex)) {
           finishOrder.push(participant.laneIndex);
-          
+
           // If this is the first finisher, they're the winner
           if (finishOrder.length === 1) {
             participant.winning = true;
             racer.classList.add("winner");
-            console.log('Winner:', {
+            console.log("Winner:", {
               name: participant.name,
               position: finishOrder.length,
-              laneIndex: participant.laneIndex
+              laneIndex: participant.laneIndex,
             });
           }
         }
@@ -626,13 +697,17 @@ document.addEventListener("DOMContentLoaded", () => {
         clearInterval(raceInterval);
         raceInterval = null;
       }
-      
+
       // Clear previous race positions
       document.querySelectorAll(".race-lane").forEach((lane) => {
-        lane.querySelectorAll(".place-label").forEach((label) => label.remove());
+        lane
+          .querySelectorAll(".place-label")
+          .forEach((label) => label.remove());
       });
-      document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
-      
+      document
+        .querySelectorAll(".running-dust")
+        .forEach((dust) => dust.remove());
+
       console.log("Current participants:", nameInput.value);
       if (!nameInput.value.trim()) {
         nameInput.value = sampleNames.join("\n");
@@ -670,7 +745,9 @@ document.addEventListener("DOMContentLoaded", () => {
       countdownDisplay();
     } catch (error) {
       console.error("Error starting race:", error);
-      alert("An error occurred while starting the race. Please refresh the page and try again.");
+      alert(
+        "An error occurred while starting the race. Please refresh the page and try again."
+      );
       cleanupRace();
     }
   }
@@ -761,45 +838,53 @@ document.addEventListener("DOMContentLoaded", () => {
     timestamp,
     save = true
   ) {
-    console.log('Adding result to history:', { participantName, color, character, timestamp });
-    
+    console.log("Adding result to history:", {
+      participantName,
+      color,
+      character,
+      timestamp,
+    });
+
     // Ensure results container exists and is visible
     if (!resultsContainer) {
-      console.error('Results container not found');
+      console.error("Results container not found");
       return;
     }
-  
+
     // Make sure the results section is visible
-    const resultsSection = document.querySelector('.results-section');
+    const resultsSection = document.querySelector(".results-section");
     if (resultsSection) {
-      resultsSection.style.display = 'block';
+      resultsSection.style.display = "block";
     }
-  
+
     const resultElement = document.createElement("div");
     resultElement.className = "result-item";
-  
+
     // Try to find character by name, or use the character string directly if it's an emoji
     const characterObj = characterSet.find((c) => c.name === character);
-    const emoji = characterObj?.emoji || (character?.length === 2 ? character : "🏃");
-  
+    const emoji =
+      characterObj?.emoji || (character?.length === 2 ? character : "🏃");
+
     resultElement.innerHTML = `
       <div class="result-color" style="background-color: ${color}">${emoji}</div>
       <div class="result-info">
-        <div class="result-winner">🏆 ${participantName || "Unknown Racer"}</div>
+        <div class="result-winner">🏆 ${
+          participantName || "Unknown Racer"
+        }</div>
         <div class="result-time">${timestamp}</div>
       </div>
     `;
-  
+
     // Insert at the beginning of the container
     resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
-  
+
     // Force a reflow to trigger the animation
     resultElement.offsetHeight;
-  
+
     // Add visible class after insertion
     resultElement.classList.add("visible");
-    console.log('Result element added:', resultElement);
-  
+    console.log("Result element added:", resultElement);
+
     if (save) {
       saveRaceResult(participantName, color, character);
     }
@@ -821,7 +906,7 @@ document.addEventListener("DOMContentLoaded", () => {
     winnerDisplay.classList.remove("show");
     countdownOverlay.style.display = "none";
     finishOrder = [];
-    
+
     // Clear visual elements
     document.querySelectorAll(".running-dust").forEach((dust) => dust.remove());
     document.querySelectorAll(".race-lane").forEach((lane) => {
@@ -871,9 +956,9 @@ document.addEventListener("DOMContentLoaded", () => {
       participant: participant || "Unknown Racer",
       color: color || "#4f46e5",
       character: emoji || "🏃", // Store the emoji directly
-      timestamp: new Date().toLocaleString()
+      timestamp: new Date().toLocaleString(),
     };
-  
+
     let results = [];
     try {
       const savedResults = localStorage.getItem("raceResults");
@@ -884,10 +969,10 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error parsing saved results:", error);
       // Continue with empty results array
     }
-  
+
     results.push(result);
     localStorage.setItem("raceResults", JSON.stringify(results));
-  
+
     return result;
   }
 
@@ -942,4 +1027,11 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSavedNames();
   loadRaceHistory();
   initSpeedControl();
+
+  // Create debug panel after build info is loaded
+  setTimeout(() => {
+    if (buildInfo) {
+      createDebugPanel();
+    }
+  }, 100);
 });
