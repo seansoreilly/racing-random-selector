@@ -49,3 +49,20 @@ node_modules/
 .cursor/
 changelog/
 
+# Added by Task Master AI
+# Logs
+dev-debug.log
+# Dependency directories
+.idea
+.vscode
+# OS specific
+
+.taskmaster/
+.roomodes
+.windsurfrules
+.roo/
+.cursor/
+*.md
+.env.example
+
+

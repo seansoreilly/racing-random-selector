@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Racing-themed custom components */
+@layer components {
+  .btn-racing {
+    @apply bg-racing-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg 
+           shadow-lg transform hover:scale-105 transition-all duration-200 
+           border-2 border-racing-black;
+  }
+  
+  .panel-racing {
+    @apply bg-white rounded-xl shadow-xl border border-gray-200 
+           backdrop-blur-sm hover:shadow-2xl transition-all duration-300;
+  }
+  
+  .race-track {
+    @apply relative min-h-[400px] bg-gradient-to-r from-green-100 to-green-200 
+           rounded-lg overflow-hidden border-4 border-racing-black;
+  }
+  
+  .finish-line {
+    @apply absolute right-0 top-0 bottom-0 w-4 
+           bg-gradient-to-b from-racing-black to-racing-white
+           border-l-4 border-racing-red;
+  }
+  
+  .racing-input {
+    @apply w-full p-4 border-2 border-gray-300 rounded-lg 
+           focus:border-racing-red focus:ring-2 focus:ring-racing-red focus:ring-opacity-50
+           transition-all duration-200 bg-white shadow-inner;
+  }
+}
+
+/* Racing animations */
+@layer utilities {
+  .animate-race {
+    animation: race 3s ease-in-out forwards;
+  }
+  
+  .animate-winner {
+    animation: winner 1s ease-in-out;
+  }
+  
+  .animate-checkered {
+    animation: checkered 0.5s ease-in-out infinite;
+  }
+}
+
+/* Preserve critical existing styles that shouldn't be lost */
+.gentle-bounce {
+  animation: gentle-bounce 3s ease-in-out infinite;
+}
+
+@keyframes gentle-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Racing-specific keyframes */
+@keyframes race {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(100% - 60px)); }
+}
+
+@keyframes winner {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(5deg); }
+  50% { transform: scale(1.2) rotate(-5deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes checkered {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Custom racing elements */
+.racing-stripes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 10px,
+    rgba(220, 38, 38, 0.1) 10px,
+    rgba(220, 38, 38, 0.1) 20px
+  );
+} 

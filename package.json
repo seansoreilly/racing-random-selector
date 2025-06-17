@@ -5,9 +5,10 @@
     "main": "index.html",
     "scripts": {
         "dev": "node server.js",
-        "build": "echo 'Static build complete'",
+        "build": "npx tailwindcss -i ./src/input.css -o ./styles.css --watch",
+        "build:css": "npx tailwindcss -i ./src/input.css -o ./styles.css",
+        "build:production": "npx tailwindcss -i ./src/input.css -o ./styles.css --minify",
         "build:with-hash": "cross-env BUILD_TIME=$(date -u +\"%Y-%m-%dT%H:%M:%S.%3NZ\") node server.js",
-        "build:production": "npm run lint:check && npm run build:with-hash",
         "start": "node server.js",
         "deploy": "vercel --prod",
         "deploy:production": "npm run build:production && npm run deploy",
@@ -38,7 +39,10 @@
     },
     "devDependencies": {
         "@playwright/test": "^1.51.1",
+        "autoprefixer": "^10.4.21",
         "cross-env": "^7.0.3",
+        "postcss": "^8.5.6",
+        "tailwindcss": "^3.4.0",
         "vercel": "^37.0.0"
     }
 }
