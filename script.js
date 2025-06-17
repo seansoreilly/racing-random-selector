@@ -287,15 +287,33 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Add background elements
-    createBackgroundElements();
+    // createBackgroundElements(); // Disabled - clean racetrack without decorative symbols
+
+    // Remove any existing background decorations for clean racetrack
+    document
+      .querySelectorAll(".background-element")
+      .forEach((el) => el.remove());
 
     // Initial positioning of names and tethers
     updateTethersAndNames();
   }
 
+  // Calculate optimal container height based on participant count
+  function calculateOptimalContainerHeight(participantCount) {
+    const minLaneHeight = 60; // Minimum height per lane for comfortable viewing
+    const padding = 30; // Top and bottom padding
+    const minContainerHeight = 400; // Minimum container height
+
+    const calculatedHeight = participantCount * minLaneHeight + padding;
+    return Math.max(calculatedHeight, minContainerHeight);
+  }
+
   // Calculate lane height based on participant count
   function calculateLaneHeight(participantCount) {
-    const containerHeight = raceTrackContainer.clientHeight;
+    const optimalHeight = calculateOptimalContainerHeight(participantCount);
+    raceTrackContainer.style.height = `${optimalHeight}px`;
+
+    const containerHeight = optimalHeight;
     const groundHeight = 15;
     const usableHeight = containerHeight - groundHeight;
     return usableHeight / participantCount;

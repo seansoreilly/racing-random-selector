@@ -707,9 +707,7 @@ video {
 
 .race-track {
   position: relative;
-  height: 500px;
   min-height: 400px;
-  max-height: 600px;
   overflow: hidden;
   border-radius: 0.5rem;
   border-width: 4px;
