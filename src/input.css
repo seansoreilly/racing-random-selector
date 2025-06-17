@@ -7,69 +7,323 @@
   .btn-racing {
     @apply bg-racing-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg 
            shadow-lg transform hover:scale-105 transition-all duration-200 
-           border-2 border-racing-black;
+           border-2 border-racing-black relative overflow-hidden
+           focus:outline-none focus:ring-4 focus:ring-red-300;
+  }
+
+  .btn-racing::before {
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent
+           opacity-0 -translate-x-full transition-all duration-500;
+    content: '';
+  }
+
+  .btn-racing:hover::before {
+    @apply opacity-30 translate-x-full;
+  }
+
+  .btn-racing:active {
+    @apply scale-95;
+  }
+
+  .btn-racing:disabled {
+    @apply opacity-50 cursor-not-allowed hover:scale-100 hover:bg-racing-red;
   }
   
   .panel-racing {
     @apply bg-white rounded-xl shadow-xl border border-gray-200 
-           backdrop-blur-sm hover:shadow-2xl transition-all duration-300;
+           backdrop-blur-sm hover:shadow-2xl transition-all duration-300
+           transform hover:-translate-y-1 overflow-hidden;
+  }
+
+  .panel-racing:hover {
+    @apply shadow-2xl -translate-y-2 shadow-primary-200;
   }
   
   .race-track {
     @apply relative min-h-[400px] bg-gradient-to-r from-green-100 to-green-200 
-           rounded-lg overflow-hidden border-4 border-racing-black;
+           rounded-lg overflow-hidden border-4 border-racing-black
+           shadow-inner;
   }
   
   .finish-line {
     @apply absolute right-0 top-0 bottom-0 w-4 
            bg-gradient-to-b from-racing-black to-racing-white
-           border-l-4 border-racing-red;
+           border-l-4 border-racing-red animate-checkered
+           shadow-lg;
   }
   
   .racing-input {
     @apply w-full p-4 border-2 border-gray-300 rounded-lg 
            focus:border-racing-red focus:ring-2 focus:ring-racing-red focus:ring-opacity-50
-           transition-all duration-200 bg-white shadow-inner;
+           transition-all duration-200 bg-white shadow-inner
+           hover:border-gray-400 hover:shadow-md focus:scale-105
+           placeholder:text-gray-400;
   }
-}
 
-/* Racing animations */
-@layer utilities {
+  /* Enhanced slider styling */
+  .slider-thumb {
+    @apply accent-racing-red transition-all duration-200;
+  }
+  
+  .slider-thumb::-webkit-slider-thumb {
+    @apply appearance-none w-6 h-6 bg-racing-red rounded-full cursor-pointer
+           border-2 border-white shadow-lg transition-all duration-200
+           hover:scale-110 hover:bg-red-600 hover:shadow-xl;
+  }
+  
+  .slider-thumb::-moz-range-thumb {
+    @apply w-6 h-6 bg-racing-red rounded-full cursor-pointer
+           border-2 border-white shadow-lg appearance-none
+           transition-all duration-200 hover:scale-110;
+  }
+
+  /* Enhanced button variants */
+  .btn-secondary {
+    @apply bg-secondary-500 hover:bg-secondary-600 text-white font-medium 
+           py-2 px-4 rounded-lg transition-all duration-200 
+           shadow-md hover:shadow-lg transform hover:scale-105
+           active:scale-95 focus:outline-none focus:ring-4 focus:ring-secondary-300;
+  }
+
+  .btn-danger {
+    @apply bg-red-500 hover:bg-red-600 text-white font-medium 
+           py-2 px-4 rounded-lg transition-all duration-200 
+           shadow-md hover:shadow-lg transform hover:scale-105
+           active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-300;
+  }
+
+  .btn-success {
+    @apply bg-racing-green hover:bg-green-600 text-white font-medium 
+           py-2 px-4 rounded-lg transition-all duration-200 
+           shadow-md hover:shadow-lg transform hover:scale-105
+           active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-300;
+  }
+
+  .btn-outline {
+    @apply border-2 border-racing-red text-racing-red bg-transparent
+           hover:bg-racing-red hover:text-white font-medium 
+           py-2 px-4 rounded-lg transition-all duration-200 
+           shadow-md hover:shadow-lg transform hover:scale-105
+           active:scale-95 focus:outline-none focus:ring-4 focus:ring-red-300;
+  }
+
+  /* Enhanced race lane styling with better gradient animations */
+  .race-lane {
+    @apply relative bg-gradient-to-r from-green-200 to-green-300 
+           border-2 border-green-400 rounded-lg
+           min-h-[60px] mb-2 overflow-hidden transition-all duration-300
+           hover:from-green-300 hover:to-green-400 hover:shadow-md
+           shadow-sm;
+  }
+
+  .race-lane::before {
+    @apply absolute inset-0 bg-gradient-to-r from-green-100 via-transparent to-green-100
+           opacity-30;
+    content: '';
+    animation: lane-pulse 2s ease-in-out infinite;
+  }
+
+  .race-lane.active {
+    @apply border-racing-red shadow-lg bg-gradient-to-r from-red-100 to-red-200;
+  }
+
+  .race-lane.active::before {
+    @apply bg-gradient-to-r from-racing-red via-transparent to-racing-red
+           opacity-20;
+    animation: lane-active 1s ease-in-out infinite;
+  }
+
+  /* Enhanced racer styling */
+  .racer {
+    @apply absolute left-0 top-1/2 transform -translate-y-1/2 z-10
+           transition-transform duration-100 gpu-accelerated;
+  }
+
+  .racer.racing {
+    @apply animate-drive;
+  }
+
+  .racer-name {
+    @apply text-sm font-bold text-racing-black bg-white bg-opacity-95
+           px-3 py-1 rounded-full shadow-md border border-gray-200
+           transition-all duration-200 hover:shadow-lg hover:scale-105
+           backdrop-blur-sm;
+  }
+
+  .racer-avatar {
+    @apply w-12 h-12 rounded-full border-2 border-white shadow-lg
+           transition-all duration-200 hover:scale-110 hover:shadow-xl;
+  }
+
+  /* Enhanced winner display */
+  .winner-celebration {
+    @apply bg-gradient-to-r from-racing-yellow via-accent-400 to-racing-yellow
+           text-racing-black font-bold text-center p-6 rounded-xl
+           shadow-2xl border-4 border-racing-red
+           transform-gpu relative overflow-hidden;
+    animation: winner-celebrate 2s ease-in-out infinite;
+  }
+
+  .winner-celebration::before {
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent
+           opacity-30;
+    content: '';
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .winner-confetti {
+    @apply absolute inset-0 pointer-events-none;
+  }
+
+  .winner-confetti::after {
+    @apply absolute top-0 left-1/2 w-1 h-1 bg-racing-yellow rounded-full;
+    content: '';
+    animation: confetti 2s ease-out infinite;
+  }
+
+  /* Enhanced results styling */
+  .result-item {
+    @apply bg-secondary-50 border border-secondary-200 rounded-lg p-4
+           hover:bg-secondary-100 transition-all duration-200
+           transform hover:scale-105 hover:shadow-md
+           cursor-pointer relative overflow-hidden;
+  }
+
+  .result-item::before {
+    @apply absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b 
+           from-primary-400 to-primary-600 transform scale-y-0
+           transition-transform duration-300 origin-bottom;
+    content: '';
+  }
+
+  .result-item:hover::before {
+    @apply scale-y-100;
+  }
+
+  .result-position {
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-full
+           text-sm font-bold text-white mr-3 transition-all duration-200
+           hover:scale-110 shadow-md;
+  }
+
+  .result-position.first {
+    @apply bg-gradient-to-br from-racing-yellow to-yellow-600 text-racing-black
+           shadow-lg;
+    animation: winner-pulse 2s ease-in-out infinite;
+  }
+
+  .result-position.second {
+    @apply bg-gradient-to-br from-gray-300 to-gray-500 shadow-md;
+  }
+
+  .result-position.third {
+    @apply bg-gradient-to-br from-amber-400 to-amber-700 shadow-md;
+  }
+
+  .result-position.other {
+    @apply bg-gradient-to-br from-secondary-400 to-secondary-600;
+  }
+
+  /* Loading and countdown displays */
+  .countdown-display {
+    @apply text-8xl font-bold text-white drop-shadow-2xl
+           flex items-center justify-center;
+    animation: countdown-scale 1s ease-out;
+  }
+
+  /* Animation utilities */
   .animate-race {
     animation: race 3s ease-in-out forwards;
   }
-  
+
   .animate-winner {
-    animation: winner 1s ease-in-out;
+    animation: winner 1s ease-in-out forwards;
   }
-  
+
   .animate-checkered {
     animation: checkered 0.5s ease-in-out infinite;
   }
+
+  .animate-countdown {
+    animation: countdown 1s ease-in-out forwards;
+  }
+
+  .animate-drive {
+    animation: driveAnimation 0.1s ease-in-out;
+  }
+
+  .animate-wheel-spin {
+    animation: wheelSpin 0.5s linear infinite;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+
+  .animate-celebrate {
+    animation: celebrate 2s ease-in-out infinite;
+  }
+
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  /* GPU acceleration for better performance */
+  .transform-gpu {
+    transform: translateZ(0);
+    will-change: transform;
+  }
 }
 
-/* Preserve critical existing styles that shouldn't be lost */
+/* Utility classes for common patterns */
 .gentle-bounce {
-  animation: gentle-bounce 3s ease-in-out infinite;
+  animation: gentle-bounce 2s ease-in-out infinite;
 }
 
+/* Enhanced keyframe animations */
 @keyframes gentle-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
 }
 
-/* Racing-specific keyframes */
 @keyframes race {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(calc(100% - 60px)); }
+  0% { 
+    transform: translateX(0); 
+    filter: blur(0px);
+  }
+  20% { 
+    filter: blur(1px);
+  }
+  80% { 
+    filter: blur(1px);
+  }
+  100% { 
+    transform: translateX(100%); 
+    filter: blur(0px);
+  }
 }
 
 @keyframes winner {
-  0% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.1) rotate(5deg); }
-  50% { transform: scale(1.2) rotate(-5deg); }
-  75% { transform: scale(1.1) rotate(5deg); }
-  100% { transform: scale(1) rotate(0deg); }
+  0% { 
+    transform: scale(0.8) rotate(-5deg); 
+    opacity: 0; 
+  }
+  50% { 
+    transform: scale(1.1) rotate(2deg); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: scale(1) rotate(0deg); 
+    opacity: 1; 
+  }
 }
 
 @keyframes checkered {
@@ -77,13 +331,243 @@
   50% { opacity: 0.7; }
 }
 
-/* Custom racing elements */
+@keyframes countdown {
+  0% { 
+    transform: scale(1.5) rotate(15deg); 
+    opacity: 0; 
+  }
+  50% { 
+    transform: scale(1) rotate(0deg); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: scale(0.8) rotate(-5deg); 
+    opacity: 0; 
+  }
+}
+
+@keyframes driveAnimation {
+  0% { transform: translateX(0) translateY(0) rotate(0deg); }
+  25% { transform: translateX(2px) translateY(-1px) rotate(1deg); }
+  50% { transform: translateX(4px) translateY(0) rotate(0deg); }
+  75% { transform: translateX(2px) translateY(1px) rotate(-1deg); }
+  100% { transform: translateX(0) translateY(0) rotate(0deg); }
+}
+
+@keyframes wheelSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.3) rotate(-10deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05) rotate(5deg);
+  }
+  70% {
+    transform: scale(0.9) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes celebrate {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% { 
+    transform: scale(1.05) rotate(1deg);
+    filter: brightness(1.1);
+  }
+  50% { 
+    transform: scale(1.1) rotate(0deg);
+    filter: brightness(1.2);
+  }
+  75% { 
+    transform: scale(1.05) rotate(-1deg);
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+@keyframes confetti {
+  0% { 
+    transform: translateY(0) rotate(0deg); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: translateY(100px) rotate(720deg); 
+    opacity: 0; 
+  }
+}
+
+/* New enhanced animations */
+@keyframes lane-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes lane-active {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes winner-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(252, 211, 77, 0);
+  }
+}
+
+@keyframes winner-celebrate {
+  0%, 100% { 
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1) contrast(1);
+  }
+  25% { 
+    transform: scale(1.02) rotate(0.5deg);
+    filter: brightness(1.1) contrast(1.1);
+  }
+  50% { 
+    transform: scale(1.05) rotate(0deg);
+    filter: brightness(1.2) contrast(1.2);
+  }
+  75% { 
+    transform: scale(1.02) rotate(-0.5deg);
+    filter: brightness(1.1) contrast(1.1);
+  }
+}
+
+@keyframes countdown-scale {
+  0% { 
+    transform: scale(0) rotate(45deg); 
+    opacity: 0; 
+  }
+  50% { 
+    transform: scale(1.2) rotate(0deg); 
+    opacity: 1; 
+  }
+  100% { 
+    transform: scale(1) rotate(0deg); 
+    opacity: 1; 
+  }
+}
+
+/* Racing stripe pattern */
 .racing-stripes {
-  background-image: repeating-linear-gradient(
-    -45deg,
-    transparent,
-    transparent 10px,
-    rgba(220, 38, 38, 0.1) 10px,
-    rgba(220, 38, 38, 0.1) 20px
+  background: repeating-linear-gradient(
+    45deg,
+    #10b981,
+    #10b981 10px,
+    #059669 10px,
+    #059669 20px
   );
+  animation: stripeMove 2s linear infinite;
+}
+
+@keyframes stripeMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 28px 0; }
+}
+
+/* Checkered flag pattern */
+.checkered-flag {
+  background: repeating-conic-gradient(
+    #000 0% 25%, 
+    #fff 0% 50%
+  ) 50% / 20px 20px;
+  animation: checkeredMove 1s linear infinite;
+}
+
+@keyframes checkeredMove {
+  0% { background-position: 0 0, 10px 10px; }
+  100% { background-position: 20px 20px, 30px 30px; }
+}
+
+/* Enhanced scrollbar styling */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-secondary-100 rounded-full;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-racing-red rounded-full border-2 border-white;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-red-700;
+}
+
+/* GPU acceleration utility */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Enhanced focus states */
+.focus-racing:focus {
+  @apply outline-none ring-4 ring-racing-red ring-opacity-50 
+         border-racing-red shadow-lg;
+  transform: scale(1.02);
+}
+
+/* Responsive text sizing */
+@media (min-width: 640px) {
+  .text-responsive-xl {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-responsive-xl {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-xl {
+    font-size: 1.875rem;
+  }
 } 
