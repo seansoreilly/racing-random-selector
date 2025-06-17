@@ -50,96 +50,197 @@
         gtag('config', 'G-Y2F57YEMR3');
     </script>
 </head>
-<body>
-    <!-- Tailwind Test Element - Remove after verifying setup -->
-    <div class="bg-racing-red text-white p-4 text-center font-bold">
-        🏁 Tailwind CSS is working! Racing theme loaded successfully! 🏁
-    </div>
-    
-    <div class="app-container">
-        <header>
-            <div class="header-container">
-                <div class="mascot-container">
-                    <picture>
-                        <source srcset="sprites/header.png" type="image/png">
-                        <img src="sprites/header.png" alt="Racing Mascot" class="mascot-image">
-                    </picture>
-                </div>
-                <div class="title-container">
-                    <h1><i class="fas fa-running"></i> Racing Random Selector</h1>
-                    <p class="subtitle">Choose a winner through an exciting race animation!</p>
+<body class="min-h-screen bg-gradient-to-br from-secondary-50 to-secondary-100 font-racing text-secondary-900 antialiased">
+    <!-- Main Application Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        <!-- Header Section -->
+        <header class="animate-fade-in">
+            <div class="panel-racing">
+                <div class="flex items-center justify-center gap-6 p-6 md:p-8 md:gap-8">
+                    <!-- Mascot Container -->
+                    <div class="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 relative overflow-hidden transition-transform duration-300 hover:scale-110 gentle-bounce">
+                        <picture>
+                            <source srcset="sprites/header.png" type="image/png">
+                            <img src="sprites/header.png" alt="Racing Mascot" class="w-full h-full object-contain filter drop-shadow-lg">
+                        </picture>
+                    </div>
+                    
+                    <!-- Title Container -->
+                    <div class="text-center md:text-left flex-grow">
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-display text-primary-600 mb-2 leading-tight">
+                            <i class="fas fa-running text-racing-yellow mr-2 md:mr-3 animate-bounce"></i>
+                            <span class="bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent">
+                                Racing Random Selector
+                            </span>
+                        </h1>
+                        <p class="text-base sm:text-lg md:text-xl text-secondary-600 font-medium max-w-md md:max-w-none">
+                            Choose a winner through an exciting race animation!
+                        </p>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <main>
-            <div class="main-content">
-                <section class="input-section">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2><i class="fas fa-user-friends"></i> Participants</h2>
+        <!-- Main Content -->
+        <main class="animate-slide-up">
+            <!-- Responsive Layout: Mobile-first, then Desktop 3-column -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+                <!-- Input Section - Left Column -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Participants Panel -->
+                    <div class="panel-racing group">
+                        <div class="bg-gradient-to-r from-secondary-50 to-white p-4 border-b border-secondary-200">
+                            <h2 class="text-lg sm:text-xl font-bold text-secondary-800 flex items-center gap-3">
+                                <i class="fas fa-user-friends text-primary-500 group-hover:scale-110 transition-transform duration-200"></i>
+                                <span>Participants</span>
+                                <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full ml-auto">
+                                    Enter Names
+                                </span>
+                            </h2>
                         </div>
-                        <div class="panel-body">
-                            <textarea id="nameInput" placeholder="Enter participant names (one per line)"></textarea>
+                        <div class="p-4">
+                            <textarea 
+                                id="nameInput" 
+                                placeholder="Enter participant names (one per line)&#10;&#10;Example:&#10;Lightning McQueen&#10;Speed Racer&#10;Fast & Furious"
+                                class="racing-input min-h-[180px] sm:min-h-[200px] resize-none focus-racing">
+                            </textarea>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <button id="loadDemo" class="btn-outline text-xs px-3 py-1">
+                                    <i class="fas fa-magic mr-1"></i>
+                                    Load Demo
+                                </button>
+                                <button id="clearNames" class="btn-secondary text-xs px-3 py-1">
+                                    <i class="fas fa-eraser mr-1"></i>
+                                    Clear
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2><i class="fas fa-sliders-h"></i> Race Settings</h2>
+                    <!-- Race Settings Panel -->
+                    <div class="panel-racing group">
+                        <div class="bg-gradient-to-r from-secondary-50 to-white p-4 border-b border-secondary-200">
+                            <h2 class="text-lg sm:text-xl font-bold text-secondary-800 flex items-center gap-3">
+                                <i class="fas fa-sliders-h text-primary-500 group-hover:scale-110 transition-transform duration-200"></i>
+                                <span>Race Settings</span>
+                            </h2>
                         </div>
-                        <div class="panel-body">
-                            <div class="setting-item">
-                                <div class="setting-label">Race Speed: <span id="speedValue" class="setting-value">Slow</span></div>
-                                <input type="range" id="speedControl" min="0" max="100" value="70">
-                                <div class="speed-labels">
-                                    <span>Slower</span>
-                                    <span>Faster</span>
+                        <div class="p-4 space-y-4">
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-secondary-700">Race Speed:</span>
+                                    <span id="speedValue" class="text-primary-600 font-bold text-lg px-3 py-1 bg-primary-50 rounded-full">
+                                        Slow
+                                    </span>
+                                </div>
+                                <input type="range" id="speedControl" min="0" max="100" value="70" 
+                                       class="w-full h-3 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider-thumb focus-racing">
+                                <div class="flex justify-between text-xs text-secondary-500 font-medium">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-turtle mr-1"></i>
+                                        Slower
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-rocket mr-1"></i>
+                                        Faster
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <section class="race-section">
-                    <div class="panel">
-                        <div class="panel-header">
-                            <h2><i class="fas fa-trophy"></i> Race Track</h2>
+                <!-- Race Section - Right Column (spans 2 columns on large screens) -->
+                <div class="lg:col-span-2">
+                    <div class="panel-racing h-full flex flex-col min-h-[500px]">
+                        <div class="bg-gradient-to-r from-secondary-50 to-white p-4 border-b border-secondary-200 flex-shrink-0">
+                            <h2 class="text-lg sm:text-xl font-bold text-secondary-800 flex items-center gap-3">
+                                <i class="fas fa-trophy text-racing-yellow animate-pulse"></i>
+                                <span>Race Track</span>
+                                <div class="ml-auto flex items-center gap-2">
+                                    <span class="hidden sm:inline text-xs bg-racing-yellow bg-opacity-20 text-racing-black px-2 py-1 rounded-full">
+                                        <i class="fas fa-flag-checkered mr-1"></i>
+                                        Ready to Race
+                                    </span>
+                                </div>
+                            </h2>
                         </div>
-                        <div class="panel-body">
-                            <div id="raceTrackContainer" class="race-track-container">
+                        <div class="p-4 flex-grow flex flex-col">
+                            <div id="raceTrackContainer" class="race-track relative">
                                 <div class="finish-line"></div>
-                                <div id="raceLanes"></div>
-                                <div class="race-ground"></div>
-                                <div id="countdownOverlay" class="countdown-overlay" style="display:none;"></div>
+                                <div id="raceLanes" class="space-y-2 p-4"></div>
+                                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-green-300 to-green-200 racing-stripes"></div>
+                                <div id="countdownOverlay" class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden backdrop-blur-sm">
+                                    <div class="countdown-display"></div>
+                                </div>
                             </div>
-                            <div id="winner" class="winner-display"></div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <section class="action-buttons">
-                <button id="startRace" class="btn primary large"><i class="fas fa-flag-checkered"></i> Start Race</button>
-            </section>
-
-            <section class="results-section">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2><i class="fas fa-history"></i> Race History</h2>
-                        <button id="clearHistory" class="btn small"><i class="fas fa-trash"></i> Clear</button>
-                    </div>
-                    <div class="panel-body">
-                        <div id="resultsContainer" class="results-container">
-                            <!-- Race results will be added here dynamically -->
+                            <div id="winner" class="mt-4 p-4 bg-gradient-to-r from-racing-yellow to-accent-400 rounded-lg text-center font-bold text-lg text-racing-black hidden winner-celebration">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center space-y-4 animate-bounce-in">
+                <button id="startRace" class="btn-racing text-lg sm:text-xl px-6 sm:px-8 py-3 sm:py-4 shadow-2xl">
+                    <i class="fas fa-flag-checkered mr-2 sm:mr-3"></i>
+                    <span>Start Race</span>
+                    <i class="fas fa-bolt ml-2 sm:ml-3 animate-pulse"></i>
+                </button>
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <button id="resetRace" class="btn-secondary text-sm px-4 py-2">
+                        <i class="fas fa-redo mr-2"></i>
+                        Reset Race
+                    </button>
+                    <button id="newRace" class="btn-success text-sm px-4 py-2">
+                        <i class="fas fa-plus mr-2"></i>
+                        New Race
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="panel-racing animate-fade-in">
+                <div class="bg-gradient-to-r from-secondary-50 to-white p-4 border-b border-secondary-200 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                    <h2 class="text-lg sm:text-xl font-bold text-secondary-800 flex items-center gap-3">
+                        <i class="fas fa-history text-primary-500"></i>
+                        <span>Race History</span>
+                        <span id="historyCount" class="text-xs bg-secondary-100 text-secondary-600 px-2 py-1 rounded-full">
+                            0 races
+                        </span>
+                    </h2>
+                    <div class="flex gap-2">
+                        <button id="exportHistory" class="btn-outline text-xs px-3 py-1">
+                            <i class="fas fa-download mr-1"></i>
+                            Export
+                        </button>
+                        <button id="clearHistory" class="btn-danger text-xs px-3 py-1">
+                            <i class="fas fa-trash mr-1"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div id="resultsContainer" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
+                        <div class="text-center text-secondary-400 py-8">
+                            <i class="fas fa-trophy text-4xl mb-3 opacity-50"></i>
+                            <p class="text-sm">No races completed yet. Start your first race!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
 
-        <footer>
-            <script src="script.js"></script>
+        <!-- Footer -->
+        <footer class="text-center text-secondary-500 text-sm py-4 border-t border-secondary-200">
+            <div class="space-y-2">
+                <p>
+                    <i class="fas fa-heart text-red-500 animate-pulse"></i>
+                    Made with passion for fair and fun selections
+                </p>
+                <script src="script.js"></script>
+            </div>
         </footer>
     </div>
 
