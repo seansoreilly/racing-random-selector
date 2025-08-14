@@ -13,7 +13,7 @@
         "deploy:production": "npm run build:production && npm run deploy",
         "lint:check": "echo 'Lint check passed'",
         "test": "echo 'Tests passed'",
-        "health": "curl -f http://localhost:8000/api/health || exit 1"
+        "health": "curl -f http://localhost:3000/api/health || exit 1"
     },
     "keywords": [
         "random-selector",

@@ -8,7 +8,7 @@ const path = require("path");
 const { getBuildInfo, getPublicBuildInfo } = require("./lib/build-info");
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 
 // Get build info at startup
 const buildInfo = getBuildInfo();
