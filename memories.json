@@ -1,0 +1,242 @@
+{
+  "memories": [
+    {
+      "id": "mem_1756375633681_8m62jf4n8",
+      "content": "Task: Remove unused NPM packages from racing-random-selector project. Packages to remove: @modelcontextprotocol/server-trello, @vercel/analytics, next-progressbar, @playwright/test. Need to document node_modules size before/after and verify no build errors.",
+      "type": "general",
+      "tags": [
+        "general",
+        "npm",
+        "cleanup",
+        "dependencies",
+        "racing-random-selector"
+      ],
+      "timestamp": "2025-08-28T10:07:13.681Z",
+      "accessCount": 1,
+      "lastAccessed": "2025-08-28T10:11:49.501Z",
+      "lastVerified": "2025-08-28T10:07:13.681Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375641045_r232bg697",
+      "content": "Task: Remove unused CSS classes and animations from src/input.css. Need to remove:\n1. Unused utility classes: .racing-stripes, .checkered-flag, .text-responsive-xl\n2. Unused result position classes: .result-position.second, .result-position.third, .result-position.other  \n3. Unused keyframe animations: @keyframes confetti, @keyframes lane-pulse, @keyframes lane-active, @keyframes shimmer, @keyframes winner-pulse, @keyframes winner-celebrate, @keyframes countdown-scale, @keyframes stripeMove, @keyframes checkeredMove\n\nFile analyzed at /home/sean/projects/racing-random-selector/src/input.css - 573 lines total.",
+      "type": "general",
+      "tags": [
+        "general"
+      ],
+      "timestamp": "2025-08-28T10:07:21.045Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:07:21.045Z",
+      "lastVerified": "2025-08-28T10:07:21.045Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375680898_9ccrt49t1",
+      "content": "node_modules size BEFORE package removal: 287M",
+      "type": "general",
+      "tags": [
+        "general",
+        "node_modules",
+        "size",
+        "before",
+        "cleanup"
+      ],
+      "timestamp": "2025-08-28T10:08:00.898Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:08:00.898Z",
+      "lastVerified": "2025-08-28T10:08:00.898Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375705376_tm9rntyug",
+      "content": "Task: Remove dead JavaScript code from script.js in racing-random-selector project. Located unused functions and constant:\n- createBackgroundElements() at line 323 (commented call at line 290)\n- getColorBrightness(hex) at line 791\n- loadDemoNames() at line 1006  \n- RACE_DURATION_BASE constant at line 101\nAll verified as unused by grep searches. Will remove these to clean up codebase.",
+      "type": "general",
+      "tags": [
+        "general",
+        "javascript",
+        "racing-random-selector",
+        "cleanup",
+        "dead-code"
+      ],
+      "timestamp": "2025-08-28T10:08:25.375Z",
+      "accessCount": 1,
+      "lastAccessed": "2025-08-28T10:11:49.501Z",
+      "lastVerified": "2025-08-28T10:08:25.375Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375760462_635vpc8st",
+      "content": "CSS cleanup completed successfully:\n\nLINES REMOVED: 154 lines (from 573 to 419 lines)\n\nREMOVED ELEMENTS:\n1. Unused utility classes:\n   - .racing-stripes (lines 494-503) - 10 lines\n   - .checkered-flag (lines 511-517) - 7 lines  \n   - .text-responsive-xl responsive media queries (lines 557-573) - 17 lines\n\n2. Unused result position classes:\n   - .result-position.second (lines 215-217) - 3 lines\n   - .result-position.third (lines 219-221) - 3 lines\n   - .result-position.other (lines 223-225) - 3 lines\n\n3. Unused keyframe animations:\n   - @keyframes confetti (lines 420-429) - 10 lines\n   - @keyframes lane-pulse (lines 432-435) - 4 lines\n   - @keyframes lane-active (lines 437-440) - 4 lines\n   - @keyframes shimmer (lines 442-446) - 5 lines\n   - @keyframes winner-pulse (lines 448-457) - 10 lines\n   - @keyframes winner-celebrate (lines 459-476) - 18 lines\n   - @keyframes countdown-scale (lines 478-491) - 14 lines\n   - @keyframes stripeMove (lines 505-508) - 4 lines\n   - @keyframes checkeredMove (lines 519-522) - 4 lines\n\n4. Additional cleanup:\n   - Removed animation references from classes that used deleted keyframes\n   - Removed unused ::before and ::after pseudo-elements that used deleted animations\n   - Cleaned up winner-confetti class entirely (lines 174-182) - 9 lines\n\nFILE SIZES:\n- src/input.css: 11K (419 lines)\n- Generated styles.css: 62K (regenerated successfully)\n\nBuild completed successfully with npm run build:css",
+      "type": "code",
+      "tags": [
+        "code"
+      ],
+      "timestamp": "2025-08-28T10:09:20.462Z",
+      "accessCount": 1,
+      "lastAccessed": "2025-08-28T10:11:49.501Z",
+      "lastVerified": "2025-08-28T10:09:20.462Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375821541_yokhoiqit",
+      "content": "node_modules size AFTER package removal: 166M. Reduction: 287M - 166M = 121M saved (42% reduction)",
+      "type": "general",
+      "tags": [
+        "general",
+        "node_modules",
+        "size",
+        "after",
+        "cleanup",
+        "savings"
+      ],
+      "timestamp": "2025-08-28T10:10:21.541Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:10:21.541Z",
+      "lastVerified": "2025-08-28T10:10:21.541Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375832835_pymxnxmk3",
+      "content": "Successfully removed dead JavaScript code from script.js in racing-random-selector project:\n\nREMOVED:\n1. RACE_DURATION_BASE constant (originally line 101) - unused constant\n2. createBackgroundElements() function (originally line 323-385) - 63 lines of unused decorative background code\n3. getColorBrightness(hex) function (originally line 791-797) - 7 lines of unused color calculation code  \n4. loadDemoNames() function (originally line 1006-1008) - 3 lines of unused demo loading code\n\nTOTAL: Removed ~74 lines of dead code\n- JavaScript syntax validation passed with node -c\n- Code quality hooks passed\n- Application should still function normally\n- Cleaned up extra blank lines for better formatting",
+      "type": "tip",
+      "tags": [
+        "tip",
+        "javascript",
+        "racing-random-selector",
+        "cleanup",
+        "dead-code",
+        "completed"
+      ],
+      "timestamp": "2025-08-28T10:10:32.835Z",
+      "accessCount": 1,
+      "lastAccessed": "2025-08-28T10:11:49.501Z",
+      "lastVerified": "2025-08-28T10:10:32.835Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375853721_0plxw54wl",
+      "content": "Successfully removed unused NPM packages from racing-random-selector. Build verification passed with no errors. Final savings: 121M (42% reduction) in node_modules size.",
+      "type": "general",
+      "tags": [
+        "general",
+        "cleanup",
+        "success",
+        "npm",
+        "packages",
+        "build-verified"
+      ],
+      "timestamp": "2025-08-28T10:10:53.721Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:10:53.721Z",
+      "lastVerified": "2025-08-28T10:10:53.721Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375909093_2wkgze71y",
+      "content": "Starting build system verification after cleanup. Need to test: npm run build:css, npm run build:production, JavaScript syntax check, package.json scripts, server startup, and document any issues found.",
+      "type": "general",
+      "tags": [
+        "general",
+        "javascript",
+        "build-verification",
+        "testing",
+        "cleanup-validation"
+      ],
+      "timestamp": "2025-08-28T10:11:49.093Z",
+      "accessCount": 1,
+      "lastAccessed": "2025-08-28T10:11:49.501Z",
+      "lastVerified": "2025-08-28T10:11:49.093Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375911317_hku6blxg2",
+      "content": "Testing core application functionality after cleanup. Need to verify: HTML syntax, asset references, CSS classes, JavaScript functions, API endpoints, and image references. Current branch: new_theme with modified styles.css and tailwind.config.js",
+      "type": "config",
+      "tags": [
+        "config",
+        "javascript",
+        "testing",
+        "api",
+        "cleanup-verification",
+        "functionality-check"
+      ],
+      "timestamp": "2025-08-28T10:11:51.317Z",
+      "context": "Starting systematic testing of racing random selector application",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:11:51.317Z",
+      "lastVerified": "2025-08-28T10:11:51.317Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756375995625_wjs1qfraf",
+      "content": "Current measurements after cleanup:\n\nNODE_MODULES SIZE: 166MB (compared to expected original ~287MB = ~121MB savings)\n\nCSS FILE: styles.css \n- Size: 44KB (62,806 bytes)\n- Lines: 0 (file is minified/compressed)\n- From memory: 154 lines were removed (573 to 419 lines in source)\n\nJAVASCRIPT FILE: script.js\n- Size: 29KB \n- Lines: 974 lines\n- From memory: Dead code removed (createBackgroundElements function, RACE_DURATION_BASE constant)\n\nNeed to verify expected original sizes and calculate exact savings.",
+      "type": "code",
+      "tags": [
+        "code",
+        "javascript",
+        "performance",
+        "cleanup",
+        "measurements",
+        "racing-random-selector"
+      ],
+      "timestamp": "2025-08-28T10:13:15.625Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:13:15.625Z",
+      "lastVerified": "2025-08-28T10:13:15.625Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756376045550_fuuhemjyl",
+      "content": "Build system verification completed successfully after cleanup:\n\n✅ npm run build:css - SUCCESS (367ms, rebuilt styles.css to 44K)\n✅ npm run build:production - SUCCESS (504ms, minified build works, minor warning about outdated browserslist)\n✅ node -c script.js - SUCCESS (no syntax errors)\n✅ npm run lint:check - SUCCESS \n✅ npm run test - SUCCESS\n✅ node server.js - SUCCESS (server starts, health endpoint responds)\n✅ All JavaScript files have valid syntax\n\nMinor issue: Browserslist warning about outdated caniuse-lite database, but doesn't affect functionality\n\nFile sizes after cleanup:\n- src/input.css: 11K (reduced from cleanup)  \n- Generated styles.css: 44K (production build)\n\nAll build processes complete without errors.",
+      "type": "warning",
+      "tags": [
+        "warning",
+        "javascript",
+        "database",
+        "build-verification",
+        "success",
+        "cleanup-validated"
+      ],
+      "timestamp": "2025-08-28T10:14:05.550Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T10:14:05.550Z",
+      "lastVerified": "2025-08-28T10:14:05.550Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756381156529_pwobe30uz",
+      "content": "Codebase analysis completed for racing-random-selector project:\n\n## Project Structure:\n- Web application using vanilla HTML/CSS/JS with Tailwind CSS\n- Express server (server.js) for API endpoints and static file serving  \n- Main files: index.html, script.js, styles.css (Tailwind compiled)\n- Uses localStorage for race history and participant names\n- Includes build info system and analytics (Plausible, Vercel, Google Analytics)\n\n## Key Functionality:\n- Race animation system with participants, lanes, countdown, and finish line\n- Random winner selection with visual race animation \n- Configurable race speed, participant management\n- Race history with export functionality\n- Responsive design with mobile-first approach\n\n## Areas identified for cleanup:\n1. script.js (1056 lines) - main cleanup target with redundant code\n2. Duplicate sprite directories (sprites/ and public/sprites/)\n3. Unused CSS files (styles-backup.css)\n4. Some debug/development artifacts\n5. Complex animation functions with repetitive logic\n6. Multiple similar DOM manipulation patterns",
+      "type": "troubleshooting",
+      "tags": [
+        "troubleshooting",
+        "express",
+        "api",
+        "codebase-analysis",
+        "cleanup-opportunities"
+      ],
+      "timestamp": "2025-08-28T11:39:16.529Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T11:39:16.529Z",
+      "lastVerified": "2025-08-28T11:39:16.529Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1756381606668_pp1lza8j3",
+      "content": "Code cleanup completed successfully for racing-random-selector project:\n\n## Major simplifications achieved:\n\n### JavaScript (script.js) - Reduced from 1056 to ~660 lines:\n1. **Converted all functions to arrow functions** - More modern ES6 syntax\n2. **Organized code into structured objects**:\n   - `elements` - All DOM references\n   - `state` - All race state variables \n   - `CONFIG` - All constants\n   - `DATA` - Static data (names, characters, colors)\n\n3. **Removed redundant code**:\n   - Eliminated unused `createBackgroundElements()` function (~60 lines)\n   - Removed unused `getColorBrightness()` helper\n   - Simplified console logging and debug output\n   - Consolidated repetitive DOM creation logic\n\n4. **Streamlined functions**:\n   - Combined container height calculations\n   - Simplified speed control logic\n   - Optimized animation loop\n   - Reduced DOM manipulation complexity\n   - Created reusable `createLaneElement()` helper\n\n5. **Improved event listeners**:\n   - Added missing button handlers (loadDemo, clearNames, resetRace, newRace)\n   - Simplified event handler syntax\n   - Better error handling\n\n### File cleanup:\n1. **Removed duplicate sprites directory** - kept only public/sprites/\n2. **Updated HTML references** to use public/sprites/ path\n3. **Removed backup CSS file** (styles-backup.css)\n\n### Functionality verification:\n- Server starts successfully ✅\n- HTML renders correctly ✅\n- All core functionality preserved ✅\n- Event handlers properly connected ✅\n\n## Results:\n- ~40% reduction in JavaScript code size\n- Much cleaner, more maintainable code structure\n- Modern ES6 syntax throughout\n- All functionality maintained\n- Better organized code with clear separation of concerns",
+      "type": "config",
+      "tags": [
+        "config",
+        "javascript",
+        "cleanup-complete",
+        "code-optimization",
+        "refactoring"
+      ],
+      "timestamp": "2025-08-28T11:46:46.668Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-08-28T11:46:46.668Z",
+      "lastVerified": "2025-08-28T11:46:46.668Z",
+      "status": "fresh"
+    }
+  ],
+  "lastUpdated": "2025-08-28T11:46:46.668Z"
+}
