@@ -1,0 +1,31 @@
+# Development files
+node_modules/
+.env.local
+.env.development.local
+
+# IDE and tooling
+.cursor/
+.taskmaster/
+.roo/
+.idea/
+.vscode/
+
+# Test files
+test-results/
+e2e/
+*.test.js
+*.spec.js
+
+# Documentation
+*.md
+!README.md
+
+# Logs and temporary files
+*.log
+.tmp/
+.temp/
+server.out
+
+# OS files
+.DS_Store
+Thumbs.db

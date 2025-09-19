@@ -425,6 +425,100 @@ video {
   --tw-shadow-color: #fecaca;
   --tw-shadow: var(--tw-shadow-colored);
 }
+/* Racing Logo Styles */
+.racing-logo-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.racing-trophy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.racing-trophy-icon {
+  font-size: 3rem;
+  color: #fbbf24;
+  z-index: 3;
+  position: relative;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  animation: trophyPulse 2s ease-in-out infinite;
+}
+
+.racing-flames {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.flame {
+  position: absolute;
+  width: 8px;
+  height: 20px;
+  background: linear-gradient(to top, #ef4444, #fbbf24, #f97316);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation: flicker 0.8s ease-in-out infinite alternate;
+}
+
+.flame-1 {
+  left: -15px;
+  animation-delay: 0s;
+  transform: rotate(-10deg);
+}
+
+.flame-2 {
+  left: -8px;
+  height: 25px;
+  animation-delay: 0.2s;
+}
+
+.flame-3 {
+  left: -1px;
+  height: 18px;
+  animation-delay: 0.4s;
+  transform: rotate(10deg);
+}
+
+.racing-checkered-flag {
+  position: absolute;
+  bottom: -5px;
+  right: -10px;
+  z-index: 2;
+}
+
+.flag-icon {
+  font-size: 1.2rem;
+  color: #374151;
+  animation: flagWave 1.5s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes trophyPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes flicker {
+  0% { transform: scale(1) rotate(var(--rotation, 0deg)); }
+  100% { transform: scale(1.1) rotate(calc(var(--rotation, 0deg) + 5deg)); }
+}
+
+@keyframes flagWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
 .race-track {
   position: relative;
   min-height: 400px;
@@ -433,11 +527,7 @@ video {
   border-width: 4px;
   --tw-border-opacity: 1;
   border-color: rgb(31 41 55 / var(--tw-border-opacity));
-  background-image: linear-gradient(to right, var(--tw-gradient-stops));
-  --tw-gradient-from: #dcfce7 var(--tw-gradient-from-position);
-  --tw-gradient-to: #dcfce700 var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-  --tw-gradient-to: #bbf7d0 var(--tw-gradient-to-position);
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
   --tw-shadow: inset 0 2px 4px 0 #0000000d;
   --tw-shadow-colored: inset 0 2px 4px 0 var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
@@ -894,6 +984,9 @@ video {
   animation: driveAnimation 0.1s ease-in-out;
 }
 .racer-name {
+  position: absolute;
+  top: 50%;
+  margin-top: -12px;
   border-radius: 9999px;
   border-width: 1px;
   --tw-border-opacity: 1;
@@ -922,9 +1015,10 @@ video {
     var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert)
     var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
     var(--tw-backdrop-sepia);
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.2s;
+  transition: left 0.05s ease-out;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: left;
 }
 .racer-name:hover {
   --tw-scale-x: 1.05;
@@ -936,36 +1030,57 @@ video {
   --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
     0 4px 6px -4px var(--tw-shadow-color);
 }
-.racer-avatar,
 .racer-name:hover {
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-}
-.racer-avatar {
-  height: 3rem;
-  width: 3rem;
-  border-radius: 9999px;
-  border-width: 2px;
-  --tw-border-opacity: 1;
-  border-color: rgb(255 255 255 / var(--tw-border-opacity));
-  --tw-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
-  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
-    0 4px 6px -4px var(--tw-shadow-color);
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 0.2s;
-}
-.racer-avatar:hover {
-  --tw-scale-x: 1.1;
-  --tw-scale-y: 1.1;
+  --tw-scale-x: 1.05;
+  --tw-scale-y: 1.05;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y))
     rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
     scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-  --tw-shadow: 0 20px 25px -5px #0000001a, 0 8px 10px -6px #0000001a;
-  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
-    0 8px 10px -6px var(--tw-shadow-color);
+  --tw-shadow: 0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a;
+  --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color),
+    0 4px 6px -4px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
     var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.car-container {
+  position: absolute;
+  left: 20px;
+  transition: left 0.05s ease-out;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: left;
+}
+
+.racer.running .car-container {
+  animation: driveAnimation 0.1s ease-in-out infinite;
+}
+
+.racer-animal {
+  font-size: 48px;
+  line-height: 1;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.tether {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(to right, rgba(220, 38, 38, 0.8), rgba(220, 38, 38, 0.3));
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 1px;
+  transition: all 0.1s ease;
+}
+
+.running-dust {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
 }
 .winner-celebration {
   transform: translateZ(0);
@@ -1867,6 +1982,20 @@ video {
   to {
     transform: scale(1) rotate(0deg);
     opacity: 1;
+  }
+}
+@keyframes exhaustPuff {
+  0% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1.2);
+  }
+  100% {
+    opacity: 0.6;
+    transform: translateY(-50%) scale(1);
   }
 }
 .racing-stripes {

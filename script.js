@@ -88,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
       { name: "panda", emoji: "🐼" }, { name: "fox", emoji: "🦊" }, { name: "bear", emoji: "🐻" },
       { name: "koala", emoji: "🐨" }, { name: "tiger", emoji: "🐯" }, { name: "monkey", emoji: "🐵" }, { name: "pig", emoji: "🐷" }
     ],
-    colorPalette: ["#FF5733", "#33FF57", "#3357FF", "#FF33A8", "#33FFF5", "#F5FF33", "#C233FF", "#FF8C33", "#33FFBD", "#FF335C"]
+    colorPalette: ["#FFB3BA", "#BAFFC9", "#BAE1FF", "#FFFFBA", "#FFD1FF", "#FFDFBA", "#C9BAFF", "#BAFFFF", "#F0BAFF", "#BAFFE0"]
   };
 
   const initSpeedControl = () => {
@@ -112,16 +112,23 @@ document.addEventListener("DOMContentLoaded", () => {
     state.selectedWinner = Math.floor(Math.random() * names.length);
     const laneHeight = calculateLaneHeight(names.length);
 
+    // Create a shuffled copy of characterSet to ensure unique animals
+    const availableCharacters = [...DATA.characterSet];
+    for (let i = availableCharacters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [availableCharacters[i], availableCharacters[j]] = [availableCharacters[j], availableCharacters[i]];
+    }
+
     names.forEach((name, index) => {
       const color = DATA.colorPalette[index % DATA.colorPalette.length];
-      const character = DATA.characterSet[Math.floor(Math.random() * DATA.characterSet.length)];
+      const character = availableCharacters[index % availableCharacters.length];
 
       const participant = {
         name, color, emoji: character.emoji, x: 20,
         y: index * laneHeight + laneHeight / 2, speed: 0,
         baseSpeed: 1 + Math.random() * 0.5, finished: false,
         winning: index === state.selectedWinner, showPhrase: false,
-        laneIndex: index, nameOffset: 0
+        laneIndex: index
       };
 
       state.participants.push(participant);
@@ -144,26 +151,14 @@ document.addEventListener("DOMContentLoaded", () => {
     racer.id = `racer-${index}`;
     racer.style.top = `${laneHeight / 2 - 25}px`;
 
-    const carContainer = document.createElement("div");
-    carContainer.className = "car-container";
-    carContainer.style.left = "20px";
-
-    const carBody = document.createElement("div");
-    carBody.className = "racer-car";
-    carBody.style.backgroundColor = color;
-
-    const wheels = ['front', 'back'].map(pos => {
-      const wheel = document.createElement("div");
-      wheel.className = `car-wheel ${pos}`;
-      return wheel;
-    });
-
-    const exhaust = document.createElement("div");
-    exhaust.className = "car-exhaust";
+    const animalContainer = document.createElement("div");
+    animalContainer.className = "car-container";
+    animalContainer.style.left = "20px";
 
     const animal = document.createElement("div");
     animal.className = "racer-animal";
     animal.textContent = emoji;
+    animal.style.color = color;
 
     const tether = document.createElement("div");
     tether.className = "tether";
@@ -173,46 +168,40 @@ document.addEventListener("DOMContentLoaded", () => {
     nameLabel.className = "racer-name";
     nameLabel.id = `name-${index}`;
     nameLabel.textContent = name;
-    nameLabel.style.cssText = "left: -40px; top: 50%;";
+    nameLabel.style.cssText = "left: -40px;";
 
-    carBody.append(...wheels, exhaust);
-    
-    const avatarContainer = document.createElement("div");
-    avatarContainer.className = "racer-avatar";
-    avatarContainer.append(carBody, animal);
-    
-    carContainer.appendChild(avatarContainer);
-    racer.appendChild(carContainer);
+    animalContainer.appendChild(animal);
+    racer.appendChild(animalContainer);
     lane.append(racer, tether, nameLabel);
     
     return lane;
   };
 
   const calculateLaneHeight = (participantCount) => {
-    const minLaneHeight = 60, padding = 30, minContainerHeight = 400;
+    const minLaneHeight = 100, padding = 100, minContainerHeight = 700;
     const optimalHeight = Math.max(participantCount * minLaneHeight + padding, minContainerHeight);
     elements.raceTrackContainer.style.height = `${optimalHeight}px`;
-    return (optimalHeight - 15) / participantCount;
+    return (optimalHeight - 80) / participantCount;
   };
 
 
   const createDust = (racerId) => {
     const racer = document.getElementById(`racer-${racerId}`);
-    const carContainer = racer?.querySelector(".car-container");
-    if (!carContainer) return;
+    const animalContainer = racer?.querySelector(".car-container");
+    if (!animalContainer) return;
 
     const dust = document.createElement("div");
     dust.className = "running-dust";
 
-    const carRect = carContainer.getBoundingClientRect();
+    const animalRect = animalContainer.getBoundingClientRect();
     const containerRect = elements.raceTrackContainer.getBoundingClientRect();
 
     const size = 3 + Math.random() * 7;
     const opacity = 0.3 + Math.random() * 0.3;
-    
+
     dust.style.cssText = `
-      left: ${carRect.left - containerRect.left - 10 + Math.random() * 4}px;
-      top: ${carRect.top - containerRect.top + carRect.height / 2 + 5}px;
+      left: ${animalRect.left - containerRect.left - 10 + Math.random() * 4}px;
+      top: ${animalRect.top - containerRect.top + animalRect.height / 2 + 5}px;
       width: ${size}px; height: ${size}px;
       background-color: rgba(150, 150, 150, ${opacity});
       transition: all 0.3s ease-out;
@@ -230,42 +219,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const updateTethersAndNames = () => {
     state.participants.forEach((participant, index) => {
-      const carContainer = document.querySelector(`#racer-${index} .car-container`);
+      const animalContainer = document.querySelector(`#racer-${index} .car-container`);
       const nameLabel = document.getElementById(`name-${index}`);
       const tether = document.getElementById(`tether-${index}`);
 
-      if (!carContainer || !nameLabel || !tether) return;
+      if (!animalContainer || !nameLabel || !tether) return;
 
-      const carRect = carContainer.getBoundingClientRect();
-      const carCenterY = carRect.top + carRect.height / 2;
+      const animalRect = animalContainer.getBoundingClientRect();
+      const animalCenterY = animalRect.top + animalRect.height / 2;
       const laneRect = document.querySelectorAll(".race-lane")[index].getBoundingClientRect();
 
-      const nameOffsetMax = 120, followerSpeed = 0.93;
-
       if (participant.finished) {
-        const nameX = CONFIG.FINISH_LINE - nameOffsetMax;
+        const nameX = CONFIG.FINISH_LINE - 80;
         const nameWidth = nameLabel.getBoundingClientRect().width;
         const tetherStartX = nameX + nameWidth;
         const tetherLength = Math.max(5, CONFIG.FINISH_LINE - tetherStartX);
 
         nameLabel.style.left = `${nameX}px`;
-        tether.style.cssText = `left: ${tetherStartX}px; top: ${carCenterY - laneRect.top}px; width: ${tetherLength}px`;
+        tether.style.cssText = `left: ${tetherStartX}px; top: ${animalCenterY - laneRect.top}px; width: ${tetherLength}px`;
       } else if (!state.raceInProgress && participant.x <= 20) {
         nameLabel.style.left = `-40px`;
-        tether.style.cssText = `left: 0px; top: ${carCenterY - laneRect.top}px; width: 10px`;
+        tether.style.cssText = `left: 0px; top: ${animalCenterY - laneRect.top}px; width: 10px`;
       } else {
-        participant.nameOffset = Math.min(
-          participant.nameOffset + (1 - followerSpeed) * (participant.x / 15),
-          nameOffsetMax
-        );
-
-        const nameX = Math.max(20, participant.x - participant.nameOffset);
+        // Make name follow with the icon, positioned to the left for readability
         const nameWidth = nameLabel.getBoundingClientRect().width;
-        const tetherStartX = nameX + nameWidth;
-        const tetherLength = Math.max(5, participant.x - tetherStartX);
+        const nameX = participant.x - nameWidth - 10; // Position name to the left of icon with 10px gap
 
-        nameLabel.style.left = `${nameX}px`;
-        tether.style.cssText = `left: ${tetherStartX}px; top: ${carCenterY - laneRect.top}px; width: ${tetherLength}px`;
+        nameLabel.style.left = `${Math.max(5, nameX)}px`; // Ensure minimum 5px from left edge
+        // Hide tether during race to keep it clean
+        tether.style.cssText = `left: 0px; top: ${animalCenterY - laneRect.top}px; width: 0px; opacity: 0;`;
       }
     });
   };
@@ -316,16 +298,30 @@ document.addEventListener("DOMContentLoaded", () => {
       const racer = document.getElementById(`racer-${participant.laneIndex}`);
       if (!racer) return;
 
+      // Update racer color based on position
+      const animalElement = racer.querySelector(".racer-animal");
+      if (animalElement) {
+        if (place === 0 && !participant.finished) {
+          // Current leader gets bright green
+          animalElement.style.color = "#22c55e";
+        } else {
+          // Others keep their original pastel color
+          animalElement.style.color = participant.color;
+        }
+      }
+
       let placeLabel = racer.querySelector(".place-label");
       if (!placeLabel) {
         placeLabel = document.createElement("div");
         placeLabel.className = "place-label";
         placeLabel.style.cssText = `
-          position: absolute; right: -60px; top: 50%; transform: translateY(-50%);
-          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-          color: white; padding: 4px 8px; border-radius: 12px; font-size: 14px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); min-width: 35px; text-align: center;
+          position: absolute; right: -60px; top: 25px; margin-top: -12px;
+          background: linear-gradient(135deg, #1f2937, #374151);
+          color: white; padding: 6px 10px; border-radius: 16px; font-size: 16px; font-weight: 600;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1);
+          min-width: 40px; text-align: center; border: 2px solid rgba(255, 255, 255, 0.2);
           font-family: 'Montserrat', sans-serif; z-index: 20; animation: pulsePlace 2s infinite;
+          transform: translateZ(0); backface-visibility: hidden;
         `;
         racer.appendChild(placeLabel);
       }
@@ -358,15 +354,15 @@ document.addEventListener("DOMContentLoaded", () => {
       maxSpeed *= (1 - raceFactor * 0.8);
       participant.x += maxSpeed * (0.8 + Math.random() * 0.4);
 
-      const carContainer = racer.querySelector(".car-container");
-      if (carContainer) carContainer.style.left = `${participant.x}px`;
+      const animalContainer = racer.querySelector(".car-container");
+      if (animalContainer) animalContainer.style.left = `${participant.x}px`;
 
       if (Math.random() < 0.1) createDust(index);
 
       if (participant.x >= CONFIG.FINISH_LINE && !participant.finished) {
         participant.finished = true;
         participant.x = CONFIG.FINISH_LINE;
-        if (carContainer) carContainer.style.left = `${CONFIG.FINISH_LINE}px`;
+        if (animalContainer) animalContainer.style.left = `${CONFIG.FINISH_LINE}px`;
         racer.classList.remove("running");
 
         if (!state.finishOrder.includes(participant.laneIndex)) {
@@ -453,6 +449,14 @@ document.addEventListener("DOMContentLoaded", () => {
       elements.countdownOverlay.textContent = "GO!";
       setTimeout(() => {
         elements.countdownOverlay.style.display = "none";
+        // Add racing stripes when race starts
+        elements.raceTrackContainer.style.background = `repeating-linear-gradient(
+          90deg,
+          #ffffff 0px,
+          #ffffff 20px,
+          #1f2937 20px,
+          #1f2937 40px
+        )`;
         state.raceInterval = setInterval(animateRace, 48);
       }, 1000);
     }
@@ -541,6 +545,10 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.winnerDisplay.style.display = "none";
     elements.winnerDisplay.classList.remove("show");
     elements.countdownOverlay.style.display = "none";
+
+    // Restore neutral background when race ends
+    elements.raceTrackContainer.style.background = "linear-gradient(135deg, #f8fafc, #e2e8f0)";
+
     state.finishOrder = [];
 
     document.querySelectorAll(".running-dust").forEach(dust => dust.remove());

@@ -1,8 +1,8 @@
 # Dependencies
 node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 package-lock.json
 yarn.lock
 
@@ -27,42 +27,28 @@ yarn.lock
 dist/
 build/
 coverage/
+.vercel/
+
+# Test results
+test-results/
+e2e/
 
 # Debug logs
-logs
+logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Temporary files
 .tmp/
-.temp/ 
-.vercel
+.temp/
+server.out
 
-node_modules/
-.package-lock.json
-*.bat
-*.ps1
-.package-lock.json
-
+# IDE and tooling
 .cursor/
-changelog/
-
-# Added by Task Master AI
-# Logs
-dev-debug.log
-# Dependency directories
-.idea
-.vscode
-# OS specific
-
 .taskmaster/
-.roomodes
-.windsurfrules
 .roo/
-.cursor/
+
+# Documentation (auto-generated)
 *.md
-.env.example
+!README.md
 
 
