@@ -8,12 +8,9 @@
         "build": "npx tailwindcss -i ./src/input.css -o ./styles.css --watch",
         "build:css": "npx tailwindcss -i ./src/input.css -o ./styles.css",
         "build:production": "npx tailwindcss -i ./src/input.css -o ./styles.css --minify",
-        "build:with-hash": "cross-env BUILD_TIME=$(date -u +\"%Y-%m-%dT%H:%M:%S.%3NZ\") node server.js",
         "start": "node server.js",
         "deploy": "vercel --prod",
         "deploy:production": "npm run build:production && npm run deploy",
-        "lint:check": "echo 'Lint check passed'",
-        "test": "echo 'Tests passed'",
         "health": "curl -f http://localhost:8000/api/health || exit 1"
     },
     "keywords": [
@@ -33,17 +30,13 @@
     },
     "homepage": "https://www.racingrandomselector.top/",
     "dependencies": {
-        "@modelcontextprotocol/server-trello": "github:delorenj/mcp-server-trello",
-        "@vercel/analytics": "^1.5.0",
-        "express": "^4.18.3",
-        "next-progressbar": "^1.0.0"
+        "express": "^4.18.3"
     },
     "devDependencies": {
         "@playwright/test": "^1.53.0",
         "autoprefixer": "^10.4.21",
-        "cross-env": "^7.0.3",
         "postcss": "^8.5.6",
         "tailwindcss": "^3.4.0",
-        "vercel": "^37.0.0"
+        "vercel": "^48.1.0"
     }
 }

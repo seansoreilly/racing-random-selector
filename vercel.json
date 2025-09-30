@@ -18,19 +18,11 @@
             "use": "@vercel/static"
         },
         {
-            "src": "sprites/**",
-            "use": "@vercel/static"
-        },
-        {
             "src": "public/**",
             "use": "@vercel/static"
         }
     ],
     "routes": [
-        {
-            "src": "/sprites/(.*)",
-            "dest": "/sprites/$1"
-        },
         {
             "src": "/public/(.*)",
             "dest": "/public/$1"

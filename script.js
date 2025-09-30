@@ -67,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const state = {
     participants: [],
     raceInProgress: false,
-    raceCount: 0,
     selectedWinner: 0,
     countdown: 3,
     raceInterval: null,
@@ -77,8 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Constants
   const CONFIG = {
     FINISH_LINE: elements.raceTrackContainer.clientWidth - 150,
-    MAX_PARTICIPANTS: 20,
-    RACE_DURATION_BASE: 5000
+    MAX_PARTICIPANTS: 20
   };
 
   const DATA = {
@@ -127,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
         name, color, emoji: character.emoji, x: 20,
         y: index * laneHeight + laneHeight / 2, speed: 0,
         baseSpeed: 1 + Math.random() * 0.5, finished: false,
-        winning: index === state.selectedWinner, showPhrase: false,
+        winning: index === state.selectedWinner,
         laneIndex: index
       };
 
@@ -416,7 +414,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       state.raceInProgress = true;
-      state.raceCount++;
       elements.startRaceBtn.disabled = true;
       elements.speedControl.disabled = true;
       elements.nameInput.disabled = true;
