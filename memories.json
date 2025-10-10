@@ -236,7 +236,39 @@
       "lastAccessed": "2025-08-28T11:46:46.668Z",
       "lastVerified": "2025-08-28T11:46:46.668Z",
       "status": "fresh"
+    },
+    {
+      "id": "mem_1759222231297_q0b68qk5l",
+      "content": "Cleanup analysis completed for racing-random-selector project:\n- Junk files: ~33KB (server.log, server.out, node_modules junk)\n- Unused dependencies: @modelcontextprotocol/server-trello, @vercel/analytics, next-progressbar (safe to remove)\n- Dead code: CONFIG.RACE_DURATION_BASE, state.raceCount, participant.showPhrase, duplicate build info functions\n- Stale files: product-hunt-launch.md (75% confidence), e2e/race.spec.ts (no test runner)\n- Build issues: unused npm scripts (build:with-hash, lint:check, test), vercel.json sprite path confusion\n- Duplicate code: 235 lines could be consolidated (race cleanup, button styles, animations)",
+      "type": "config",
+      "tags": [
+        "config",
+        "cleanup",
+        "racing-random-selector",
+        "code-quality"
+      ],
+      "timestamp": "2025-09-30T08:50:31.297Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-09-30T08:50:31.297Z",
+      "lastVerified": "2025-09-30T08:50:31.297Z",
+      "status": "fresh"
+    },
+    {
+      "id": "mem_1759222689781_e03r71eqs",
+      "content": "Medium cleanup completed for racing-random-selector:\n✅ Removed junk files: server.log, server.out (~1.4KB)\n✅ Removed 4 unused npm dependencies: @modelcontextprotocol/server-trello, @vercel/analytics, next-progressbar, cross-env (485 packages removed from node_modules)\n✅ Removed dead code: CONFIG.RACE_DURATION_BASE, state.raceCount, participant.showPhrase from script.js\n✅ Removed 3 unused npm scripts: build:with-hash, lint:check, test from package.json\n✅ Removed stale files: product-hunt-launch.md, e2e/race.spec.ts directory\n✅ Cleaned vercel.json: removed non-existent /sprites/ directory references\n✅ Verification: CSS build works (364ms), server starts successfully, health endpoint responds correctly",
+      "type": "config",
+      "tags": [
+        "config",
+        "cleanup",
+        "racing-random-selector",
+        "completed"
+      ],
+      "timestamp": "2025-09-30T08:58:09.781Z",
+      "accessCount": 0,
+      "lastAccessed": "2025-09-30T08:58:09.781Z",
+      "lastVerified": "2025-09-30T08:58:09.781Z",
+      "status": "fresh"
     }
   ],
-  "lastUpdated": "2025-08-28T11:46:46.668Z"
+  "lastUpdated": "2025-09-30T08:58:09.781Z"
 }
