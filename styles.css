@@ -2204,3 +2204,35 @@ video {
     line-height: 1;
   }
 }
+
+/* Header image with URL overlay */
+.header-image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.header-url-overlay {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  border-radius: 9999px;
+  background-color: rgb(0 0 0 / 0.4);
+  padding: 0.5rem 1.5rem;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+@media (min-width: 768px) {
+  .header-url-overlay {
+    font-size: 3rem;
+    line-height: 1;
+  }
+}
