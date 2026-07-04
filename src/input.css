@@ -36,7 +36,7 @@
   }
 
   .panel-racing:hover {
-    @apply shadow-2xl -translate-y-2 shadow-primary-200;
+    @apply shadow-2xl shadow-primary-200;
   }
   
   .race-track {
@@ -53,10 +53,10 @@
   }
   
   .racing-input {
-    @apply w-full p-4 border-2 border-gray-300 rounded-lg 
+    @apply w-full p-4 border-2 border-gray-300 rounded-lg
            focus:border-racing-red focus:ring-2 focus:ring-racing-red focus:ring-opacity-50
            transition-all duration-200 bg-white shadow-inner
-           hover:border-gray-400 hover:shadow-md focus:scale-105
+           hover:border-gray-400 hover:shadow-md
            placeholder:text-gray-400;
   }
 
@@ -185,8 +185,7 @@
   .result-item {
     @apply bg-secondary-50 border border-secondary-200 rounded-lg p-4
            hover:bg-secondary-100 transition-all duration-200
-           transform hover:scale-105 hover:shadow-md
-           cursor-pointer relative overflow-hidden;
+           relative overflow-hidden;
   }
 
   .result-item::before {
@@ -570,4 +569,19 @@
   .text-responsive-xl {
     font-size: 1.875rem;
   }
-} 
+}
+
+/* Respect reduced-motion preference for decorative, infinitely-looping animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-checkered,
+  .winner-celebration,
+  .winner-celebration::before,
+  .race-lane::before,
+  .race-lane.active::before,
+  .winner-confetti::after,
+  .result-position.first,
+  .fa-trophy.animate-pulse,
+  .fa-heart.animate-pulse {
+    animation: none !important;
+  }
+}
