@@ -63,7 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
     countdownOverlay: document.getElementById("countdownOverlay"),
     inputFeedback: document.getElementById("inputFeedback"),
     participantCount: document.getElementById("participantCount"),
-    raceStatusChip: document.getElementById("raceStatusChip")
+    raceStatusChip: document.getElementById("raceStatusChip"),
+    historyCount: document.getElementById("historyCount")
   };
 
   // Race state
@@ -530,6 +531,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 10);
   };
 
+  const updateHistoryCount = () => {
+    if (!elements.historyCount || !elements.resultsContainer) return;
+    const count = elements.resultsContainer.querySelectorAll(".result-item").length;
+    elements.historyCount.textContent = `${count} ${count === 1 ? "race" : "races"}`;
+  };
+
   const addResultToHistory = (participantName, color, character, timestamp, save = true) => {
     if (!elements.resultsContainer) return;
 
@@ -553,6 +560,8 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.resultsContainer.insertBefore(resultElement, elements.resultsContainer.firstChild);
     resultElement.offsetHeight;
     resultElement.classList.add("visible");
+
+    updateHistoryCount();
 
     if (save) saveRaceResult(participantName, color, character);
   };
@@ -636,6 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (confirm("Are you sure you want to clear all race history?")) {
       elements.resultsContainer.innerHTML = "";
       localStorage.removeItem("raceResults");
+      updateHistoryCount();
     }
   };
 
@@ -695,6 +705,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const newRaceBtn = document.getElementById("newRace");
   if (newRaceBtn) newRaceBtn.addEventListener("click", () => {
     elements.nameInput.value = "";
+    updateParticipantCount();
     cleanupRace();
   });
 
@@ -724,6 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRaceHistory();
   initSpeedControl();
   updateParticipantCount();
+  updateHistoryCount();
 
   setTimeout(() => {
     if (buildInfo) createDebugPanel();
