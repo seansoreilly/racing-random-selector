@@ -115,11 +115,12 @@
                                         Slow
                                     </span>
                                 </div>
-                                <input type="range" id="speedControl" min="0" max="100" value="70" 
+                                <input type="range" id="speedControl" min="0" max="100" value="70"
+                                       aria-label="Race speed"
                                        class="w-full h-3 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider-thumb focus-racing">
                                 <div class="flex justify-between text-xs text-secondary-500 font-medium">
                                     <span class="flex items-center">
-                                        <i class="fas fa-turtle mr-1"></i>
+                                        <span class="mr-1" aria-hidden="true">🐢</span>
                                         Slower
                                     </span>
                                     <span class="flex items-center">
@@ -140,7 +141,7 @@
                                 <i class="fas fa-trophy text-racing-yellow animate-pulse"></i>
                                 <span>Race Track</span>
                                 <div class="ml-auto flex items-center gap-2">
-                                    <span class="hidden sm:inline text-xs bg-racing-yellow bg-opacity-20 text-racing-black px-2 py-1 rounded-full">
+                                    <span id="raceStatusChip" class="hidden sm:inline text-xs bg-racing-yellow bg-opacity-20 text-racing-black px-2 py-1 rounded-full">
                                         <i class="fas fa-flag-checkered mr-1"></i>
                                         Ready to Race
                                     </span>
@@ -151,11 +152,11 @@
                             <div id="raceTrackContainer" class="race-track relative">
                                 <div class="finish-line"></div>
                                 <div id="raceLanes" class="space-y-2 p-4"></div>
-                                <div id="countdownOverlay" class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden backdrop-blur-sm">
+                                <div id="countdownOverlay" class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden backdrop-blur-sm" aria-live="polite" aria-atomic="true">
                                     <div class="countdown-display"></div>
                                 </div>
                             </div>
-                            <div id="winner" class="mt-4 p-4 bg-gradient-to-r from-racing-yellow to-accent-400 rounded-lg text-center font-bold text-lg text-racing-black hidden winner-celebration">
+                            <div id="winner" class="mt-4 p-4 bg-gradient-to-r from-racing-yellow to-accent-400 rounded-lg text-center font-bold text-lg text-racing-black hidden winner-celebration" aria-live="polite" aria-atomic="true">
                             </div>
                         </div>
                     </div>

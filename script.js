@@ -60,7 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer: document.getElementById("resultsContainer"),
     raceTrackContainer: document.getElementById("raceTrackContainer"),
     raceLanes: document.getElementById("raceLanes"),
-    countdownOverlay: document.getElementById("countdownOverlay")
+    countdownOverlay: document.getElementById("countdownOverlay"),
+    raceStatusChip: document.getElementById("raceStatusChip")
   };
 
   // Race state
@@ -256,6 +257,7 @@ document.addEventListener("DOMContentLoaded", () => {
       clearInterval(state.raceInterval);
       state.raceInterval = null;
       state.raceInProgress = false;
+      if (elements.raceStatusChip) elements.raceStatusChip.innerHTML = '<i class="fas fa-flag-checkered mr-1"></i>Ready to Race';
 
       const winner = state.participants[state.finishOrder[0]];
       const lastPlace = state.participants[state.finishOrder[state.finishOrder.length - 1]];
@@ -414,6 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       state.raceInProgress = true;
+      if (elements.raceStatusChip) elements.raceStatusChip.innerHTML = '<i class="fas fa-flag-checkered mr-1"></i>🏁 Racing...';
       elements.startRaceBtn.disabled = true;
       elements.speedControl.disabled = true;
       elements.nameInput.disabled = true;
@@ -536,6 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     state.raceInProgress = false;
+    if (elements.raceStatusChip) elements.raceStatusChip.innerHTML = '<i class="fas fa-flag-checkered mr-1"></i>Ready to Race';
     elements.startRaceBtn.disabled = false;
     elements.speedControl.disabled = false;
     elements.nameInput.disabled = false;
