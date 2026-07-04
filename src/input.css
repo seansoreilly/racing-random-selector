@@ -155,6 +155,11 @@
            transition-all duration-200 hover:scale-110 hover:shadow-xl;
   }
 
+  .racer-animal {
+    @apply text-4xl leading-none inline-block
+           transition-transform duration-200;
+  }
+
   /* Enhanced winner display */
   .winner-celebration {
     @apply bg-gradient-to-r from-racing-yellow via-accent-400 to-racing-yellow
