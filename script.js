@@ -89,13 +89,16 @@ document.addEventListener("DOMContentLoaded", () => {
     colorPalette: ["#FFB3BA", "#BAFFC9", "#BAE1FF", "#FFFFBA", "#FFD1FF", "#FFDFBA", "#C9BAFF", "#BAFFFF", "#F0BAFF", "#BAFFE0"]
   };
 
+  const updateSpeedLabel = () => {
+    const value = elements.speedControl.value;
+    const labels = ["Slow", "Medium", "Fast", "Super Fast"];
+    const index = Math.min(Math.floor(value / 25), 3);
+    elements.speedValue.textContent = labels[index];
+  };
+
   const initSpeedControl = () => {
-    elements.speedControl.addEventListener("input", () => {
-      const value = elements.speedControl.value;
-      const labels = ["Slow", "Medium", "Fast", "Super Fast"];
-      const index = Math.min(Math.floor(value / 25), 3);
-      elements.speedValue.textContent = labels[index];
-    });
+    elements.speedControl.addEventListener("input", updateSpeedLabel);
+    updateSpeedLabel();
   };
 
   const parseNames = () => {
@@ -176,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const calculateLaneHeight = (participantCount) => {
-    const minLaneHeight = 100, padding = 100, minContainerHeight = 700;
+    const minLaneHeight = 100, padding = 100, minContainerHeight = 350;
     const optimalHeight = Math.max(participantCount * minLaneHeight + padding, minContainerHeight);
     elements.raceTrackContainer.style.height = `${optimalHeight}px`;
     return (optimalHeight - 80) / participantCount;
@@ -437,13 +440,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const countdownDisplay = () => {
     elements.countdownOverlay.style.display = "flex";
+    const countdownText = elements.countdownOverlay.querySelector(".countdown-display");
 
     if (state.countdown > 0) {
-      elements.countdownOverlay.textContent = state.countdown;
+      countdownText.textContent = state.countdown;
       state.countdown--;
       setTimeout(countdownDisplay, 1000);
     } else {
-      elements.countdownOverlay.textContent = "GO!";
+      countdownText.textContent = "GO!";
       setTimeout(() => {
         elements.countdownOverlay.style.display = "none";
         // Add racing stripes when race starts
@@ -478,7 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const startY = winY - 100;
 
     confetti.style.cssText = `
-      position: absolute; width: ${size}px; height: ${size}px;
+      position: fixed; width: ${size}px; height: ${size}px;
       background-color: ${color}; border-radius: 50%; z-index: 10;
       left: ${startX}px; top: ${startY}px;
     `;
@@ -644,6 +648,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   window.addEventListener("resize", () => {
+    CONFIG.FINISH_LINE = elements.raceTrackContainer.clientWidth - 150;
+
     if (state.participants.length > 0) {
       const laneHeight = calculateLaneHeight(state.participants.length);
       document.querySelectorAll(".race-lane").forEach((lane, index) => {
