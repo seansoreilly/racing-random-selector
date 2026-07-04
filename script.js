@@ -312,15 +312,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!placeLabel) {
         placeLabel = document.createElement("div");
         placeLabel.className = "place-label";
-        placeLabel.style.cssText = `
-          position: absolute; right: -60px; top: 25px; margin-top: -12px;
-          background: linear-gradient(135deg, #1f2937, #374151);
-          color: white; padding: 6px 10px; border-radius: 16px; font-size: 16px; font-weight: 600;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.1);
-          min-width: 40px; text-align: center; border: 2px solid rgba(255, 255, 255, 0.2);
-          font-family: 'Montserrat', sans-serif; z-index: 20; animation: pulsePlace 2s infinite;
-          transform: translateZ(0); backface-visibility: hidden;
-        `;
         racer.appendChild(placeLabel);
       }
       placeLabel.textContent = `${place + 1}${getOrdinalSuffix(place + 1)}`;
