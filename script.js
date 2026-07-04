@@ -60,7 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer: document.getElementById("resultsContainer"),
     raceTrackContainer: document.getElementById("raceTrackContainer"),
     raceLanes: document.getElementById("raceLanes"),
-    countdownOverlay: document.getElementById("countdownOverlay")
+    countdownOverlay: document.getElementById("countdownOverlay"),
+    inputFeedback: document.getElementById("inputFeedback"),
+    participantCount: document.getElementById("participantCount")
   };
 
   // Race state
@@ -102,6 +104,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const rawInput = elements.nameInput.value.trim();
     if (!rawInput) throw new Error("No names entered");
     return rawInput.split("\n").map(name => name.trim()).filter(name => name.length > 0);
+  };
+
+  const showInputFeedback = (message, shake = true) => {
+    if (!elements.inputFeedback) return;
+    elements.inputFeedback.textContent = message;
+    elements.inputFeedback.classList.remove("hidden");
+
+    if (shake) {
+      elements.nameInput.classList.add("animate-shake");
+      setTimeout(() => elements.nameInput.classList.remove("animate-shake"), 500);
+    }
+  };
+
+  const updateParticipantCount = () => {
+    if (!elements.participantCount) return;
+    const count = elements.nameInput.value.split("\n").map(name => name.trim()).filter(name => name.length > 0).length;
+    elements.participantCount.textContent = `${count} / ${CONFIG.MAX_PARTICIPANTS} racers`;
+    elements.participantCount.classList.toggle("text-red-600", count > CONFIG.MAX_PARTICIPANTS);
+    elements.participantCount.classList.toggle("text-secondary-500", count <= CONFIG.MAX_PARTICIPANTS);
   };
 
   const initializeParticipants = (names) => {
@@ -404,12 +425,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const names = parseNames();
 
       if (names.length < 2) {
-        alert("Please enter at least 2 names to start the race.");
+        showInputFeedback("Please enter at least 2 names to start the race.");
         return;
       }
 
       if (names.length > CONFIG.MAX_PARTICIPANTS) {
-        alert(`Maximum ${CONFIG.MAX_PARTICIPANTS} participants allowed. Only the first ${CONFIG.MAX_PARTICIPANTS} names will be used.`);
+        showInputFeedback(`Maximum ${CONFIG.MAX_PARTICIPANTS} participants allowed. Only the first ${CONFIG.MAX_PARTICIPANTS} names will be used.`);
         names.splice(CONFIG.MAX_PARTICIPANTS);
       }
 
@@ -614,17 +635,47 @@ document.addEventListener("DOMContentLoaded", () => {
     elements.nameInput.value = DATA.sampleNames.join("\n");
   };
 
+  const exportHistory = () => {
+    const savedResults = localStorage.getItem("raceResults");
+    let results = [];
+    try {
+      if (savedResults) results = JSON.parse(savedResults);
+    } catch (error) {
+      console.error("Error parsing saved results:", error);
+    }
+
+    if (!results.length) {
+      showInputFeedback("No race history to export yet.", false);
+      return;
+    }
+
+    const blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "race-history.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   // Event listeners
   elements.startRaceBtn.addEventListener("click", startRace);
-  
+
   const clearHistoryBtn = document.getElementById("clearHistory");
   if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearHistory);
+
+  const exportHistoryBtn = document.getElementById("exportHistory");
+  if (exportHistoryBtn) exportHistoryBtn.addEventListener("click", exportHistory);
 
   const loadDemoBtn = document.getElementById("loadDemo");
   if (loadDemoBtn) loadDemoBtn.addEventListener("click", loadDemoNames);
 
   const clearNamesBtn = document.getElementById("clearNames");
   if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => elements.nameInput.value = "");
+
+  elements.nameInput.addEventListener("input", updateParticipantCount);
 
   const resetRaceBtn = document.getElementById("resetRace");
   if (resetRaceBtn) resetRaceBtn.addEventListener("click", cleanupRace);
@@ -658,6 +709,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSavedNames();
   loadRaceHistory();
   initSpeedControl();
+  updateParticipantCount();
 
   setTimeout(() => {
     if (buildInfo) createDebugPanel();
