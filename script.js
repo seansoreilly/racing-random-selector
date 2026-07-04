@@ -6,6 +6,12 @@ const getOrdinalSuffix = (num) => {
   return "th";
 };
 
+const escapeHtml = (str) => {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+};
+
 let buildInfo = null;
 
 const fetchBuildInfo = async () => {
@@ -15,11 +21,15 @@ const fetchBuildInfo = async () => {
       buildInfo = await response.json();
       console.log("Build info loaded:", buildInfo);
       displayBuildInfo();
+      createDebugPanel();
     }
   } catch (error) {
     console.warn("Error fetching build info:", error);
   }
 };
+
+const buildInfoMarkup = (commitHash) =>
+  `Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="build-hash">${escapeHtml(commitHash)}</span>`;
 
 const displayBuildInfo = () => {
   if (!buildInfo) return;
@@ -28,7 +38,7 @@ const displayBuildInfo = () => {
   buildInfoElement.className = "build-info";
   buildInfoElement.innerHTML = `
     <div class="build-info-content">
-      Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="build-hash">${buildInfo.commitHash}</span>
+      ${buildInfoMarkup(buildInfo.commitHash)}
     </div>
   `;
 
@@ -41,7 +51,7 @@ const createDebugPanel = () => {
     const debugPanel = document.createElement("div");
     debugPanel.className = "text-center";
     debugPanel.innerHTML = `
-      <p class="text-sm text-gray-500">Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="font-mono text-gray-600">${buildInfo.commitHash || "unknown"}</span></p>
+      <p class="text-sm text-gray-500">${buildInfoMarkup(buildInfo.commitHash || "unknown")}</p>
     `;
     document.body.appendChild(debugPanel);
   }
@@ -75,8 +85,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Constants
   const CONFIG = {
-    FINISH_LINE: elements.raceTrackContainer.clientWidth - 150,
-    MAX_PARTICIPANTS: 20
+    FINISH_LINE_OFFSET: 150,
+    finishLine: () => elements.raceTrackContainer.clientWidth - CONFIG.FINISH_LINE_OFFSET,
+    MAX_PARTICIPANTS: 20,
+    FRAME_MS: 48,
+    BASE_SPEED: 5 / 3,
+    LANE_PADDING: 80,
+    RACER_HALF_HEIGHT: 25,
+    CATCHUP_GAP_RATIO: 0.3
   };
 
   const DATA = {
@@ -147,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const racer = document.createElement("div");
     racer.className = "racer";
     racer.id = `racer-${index}`;
-    racer.style.top = `${laneHeight / 2 - 25}px`;
+    racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
 
     const animalContainer = document.createElement("div");
     animalContainer.className = "car-container";
@@ -179,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const minLaneHeight = 100, padding = 100, minContainerHeight = 700;
     const optimalHeight = Math.max(participantCount * minLaneHeight + padding, minContainerHeight);
     elements.raceTrackContainer.style.height = `${optimalHeight}px`;
-    return (optimalHeight - 80) / participantCount;
+    return (optimalHeight - CONFIG.LANE_PADDING) / participantCount;
   };
 
 
@@ -228,10 +244,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const laneRect = document.querySelectorAll(".race-lane")[index].getBoundingClientRect();
 
       if (participant.finished) {
-        const nameX = CONFIG.FINISH_LINE - 80;
+        const finishLine = CONFIG.finishLine();
+        const nameX = finishLine - 80;
         const nameWidth = nameLabel.getBoundingClientRect().width;
         const tetherStartX = nameX + nameWidth;
-        const tetherLength = Math.max(5, CONFIG.FINISH_LINE - tetherStartX);
+        const tetherLength = Math.max(5, finishLine - tetherStartX);
 
         nameLabel.style.left = `${nameX}px`;
         tether.style.cssText = `left: ${tetherStartX}px; top: ${animalCenterY - laneRect.top}px; width: ${tetherLength}px`;
@@ -265,8 +282,8 @@ document.addEventListener("DOMContentLoaded", () => {
       resultDisplay.innerHTML = `
         <div class="result-header">Race Results</div>
         <div class="position-display">
-          <div class="first-place">🥇 First: ${winner.name} ${winner.emoji}</div>
-          <div class="last-place">Last: ${lastPlace.name} ${lastPlace.emoji}</div>
+          <div class="first-place">🥇 First: ${escapeHtml(winner.name)} ${escapeHtml(winner.emoji)}</div>
+          <div class="last-place">Last: ${escapeHtml(lastPlace.name)} ${escapeHtml(lastPlace.emoji)}</div>
         </div>
       `;
 
@@ -278,9 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
       addResultToHistory(winner.name, winner.color, winner.emoji, new Date().toLocaleString());
 
       setTimeout(() => {
-        elements.startRaceBtn.disabled = false;
-        elements.speedControl.disabled = false;
-        elements.nameInput.disabled = false;
+        setControlsDisabled(false);
         playCelebrationEffect();
       }, 500);
 
@@ -336,17 +351,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       racer.classList.add("running");
 
-      let maxSpeed = 5 / 3;
+      const finishLine = CONFIG.finishLine();
+      let maxSpeed = CONFIG.BASE_SPEED;
 
       if (participant.winning) {
         maxSpeed *= (1.05 + Math.random() * 0.1);
-        if (participant.x / CONFIG.FINISH_LINE > 0.7) maxSpeed *= 1.1;
+        if (participant.x / finishLine > 0.7) maxSpeed *= 1.1;
       } else {
         maxSpeed *= participant.baseSpeed;
         if (Math.random() < 0.05) maxSpeed *= 1.5;
 
         const leader = state.participants.reduce((prev, curr) => prev.x > curr.x ? prev : curr);
-        if (leader.x - participant.x > CONFIG.FINISH_LINE * 0.3) maxSpeed *= 1.2;
+        if (leader.x - participant.x > finishLine * CONFIG.CATCHUP_GAP_RATIO) maxSpeed *= 1.2;
       }
 
       maxSpeed *= (1 - raceFactor * 0.8);
@@ -357,10 +373,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (Math.random() < 0.1) createDust(index);
 
-      if (participant.x >= CONFIG.FINISH_LINE && !participant.finished) {
+      if (participant.x >= finishLine) {
         participant.finished = true;
-        participant.x = CONFIG.FINISH_LINE;
-        if (animalContainer) animalContainer.style.left = `${CONFIG.FINISH_LINE}px`;
+        participant.x = finishLine;
+        if (animalContainer) animalContainer.style.left = `${finishLine}px`;
         racer.classList.remove("running");
 
         if (!state.finishOrder.includes(participant.laneIndex)) {
@@ -371,18 +387,23 @@ document.addEventListener("DOMContentLoaded", () => {
             racer.classList.add("winner");
           }
         }
-
-        if (!participant.winning && state.participants.filter(p => p.finished).length === 1) {
-          state.participants.forEach((p, idx) => {
-            p.winning = idx === index;
-          });
-        }
-
-        if (participant.winning) racer.classList.add("winner");
       }
     });
 
     updateTethersAndNames();
+  };
+
+  const setControlsDisabled = (disabled) => {
+    elements.startRaceBtn.disabled = disabled;
+    elements.speedControl.disabled = disabled;
+    elements.nameInput.disabled = disabled;
+  };
+
+  const clearRaceDebris = () => {
+    document.querySelectorAll(".running-dust").forEach(dust => dust.remove());
+    document.querySelectorAll(".race-lane").forEach(lane => {
+      lane.querySelectorAll(".place-label").forEach(label => label.remove());
+    });
   };
 
   const startRace = () => {
@@ -392,10 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
         state.raceInterval = null;
       }
 
-      document.querySelectorAll(".race-lane").forEach(lane => {
-        lane.querySelectorAll(".place-label").forEach(label => label.remove());
-      });
-      document.querySelectorAll(".running-dust").forEach(dust => dust.remove());
+      clearRaceDebris();
 
       if (!elements.nameInput.value.trim()) {
         elements.nameInput.value = DATA.sampleNames.join("\n");
@@ -414,9 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       state.raceInProgress = true;
-      elements.startRaceBtn.disabled = true;
-      elements.speedControl.disabled = true;
-      elements.nameInput.disabled = true;
+      setControlsDisabled(true);
       elements.winnerDisplay.style.display = "none";
       elements.winnerDisplay.classList.remove("show");
 
@@ -454,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
           #1f2937 20px,
           #1f2937 40px
         )`;
-        state.raceInterval = setInterval(animateRace, 48);
+        state.raceInterval = setInterval(animateRace, CONFIG.FRAME_MS);
       }, 1000);
     }
   };
@@ -502,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 10);
   };
 
-  const addResultToHistory = (participantName, color, character, timestamp, save = true) => {
+  const addResultToHistory = (participantName, color, emoji, timestamp, save = true) => {
     if (!elements.resultsContainer) return;
 
     const resultsSection = document.querySelector(".results-section");
@@ -511,14 +527,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultElement = document.createElement("div");
     resultElement.className = "result-item";
 
-    const characterObj = DATA.characterSet.find(c => c.name === character);
-    const emoji = characterObj?.emoji || (character?.length === 2 ? character : "🏃");
+    const displayEmoji = emoji || "🏃";
 
     resultElement.innerHTML = `
-      <div class="result-color" style="background-color: ${color}">${emoji}</div>
+      <div class="result-color" style="background-color: ${escapeHtml(color)}">${escapeHtml(displayEmoji)}</div>
       <div class="result-info">
-        <div class="result-winner">🏆 ${participantName || "Unknown Racer"}</div>
-        <div class="result-time">${timestamp}</div>
+        <div class="result-winner">🏆 ${escapeHtml(participantName || "Unknown Racer")}</div>
+        <div class="result-time">${escapeHtml(timestamp)}</div>
       </div>
     `;
 
@@ -526,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resultElement.offsetHeight;
     resultElement.classList.add("visible");
 
-    if (save) saveRaceResult(participantName, color, character);
+    if (save) saveRaceResult(participantName, color, emoji);
   };
 
   const cleanupRace = () => {
@@ -536,9 +551,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     state.raceInProgress = false;
-    elements.startRaceBtn.disabled = false;
-    elements.speedControl.disabled = false;
-    elements.nameInput.disabled = false;
+    setControlsDisabled(false);
     elements.winnerDisplay.style.display = "none";
     elements.winnerDisplay.classList.remove("show");
     elements.countdownOverlay.style.display = "none";
@@ -548,10 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     state.finishOrder = [];
 
-    document.querySelectorAll(".running-dust").forEach(dust => dust.remove());
-    document.querySelectorAll(".race-lane").forEach(lane => {
-      lane.querySelectorAll(".place-label").forEach(label => label.remove());
-    });
+    clearRaceDebris();
   };
 
   const loadSavedNames = () => {
@@ -649,7 +659,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".race-lane").forEach((lane, index) => {
         lane.style.height = `${laneHeight}px`;
         const racer = document.getElementById(`racer-${index}`);
-        if (racer) racer.style.top = `${laneHeight / 2 - 25}px`;
+        if (racer) racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
       });
     }
   });
@@ -658,8 +668,4 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSavedNames();
   loadRaceHistory();
   initSpeedControl();
-
-  setTimeout(() => {
-    if (buildInfo) createDebugPanel();
-  }, 100);
 });
