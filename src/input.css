@@ -155,6 +155,11 @@
            transition-all duration-200 hover:scale-110 hover:shadow-xl;
   }
 
+  .car-container {
+    @apply absolute top-1/2;
+    transform: translateY(-50%);
+  }
+
   .racer-animal {
     @apply text-4xl leading-none inline-block
            transition-transform duration-200;
