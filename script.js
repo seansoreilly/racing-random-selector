@@ -641,6 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loadDemoNames = () => {
     elements.nameInput.value = DATA.sampleNames.join("\n");
+    updateParticipantCount();
   };
 
   const exportHistory = () => {
@@ -681,7 +682,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loadDemoBtn) loadDemoBtn.addEventListener("click", loadDemoNames);
 
   const clearNamesBtn = document.getElementById("clearNames");
-  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => elements.nameInput.value = "");
+  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => {
+    elements.nameInput.value = "";
+    updateParticipantCount();
+  });
 
   elements.nameInput.addEventListener("input", updateParticipantCount);
 
