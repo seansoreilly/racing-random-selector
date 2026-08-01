@@ -57,6 +57,156 @@ const createDebugPanel = () => {
   }
 };
 
+/* ------------------------------------------------------------------ *
+ * Timer controller — owns every timer the race schedules so that any
+ * reset/cleanup can cancel all pending work (audit item 2).
+ * ------------------------------------------------------------------ */
+const createTimerController = () => {
+  const timeouts = new Set();
+  const intervals = new Set();
+  const frames = new Set();
+
+  return {
+    setTimeout(fn, ms) {
+      const id = window.setTimeout(() => {
+        timeouts.delete(id);
+        fn();
+      }, ms);
+      timeouts.add(id);
+      return id;
+    },
+    setInterval(fn, ms) {
+      const id = window.setInterval(fn, ms);
+      intervals.add(id);
+      return id;
+    },
+    requestAnimationFrame(fn) {
+      const id = window.requestAnimationFrame((t) => {
+        frames.delete(id);
+        fn(t);
+      });
+      frames.add(id);
+      return id;
+    },
+    clearTimeout(id) {
+      if (id == null) return;
+      timeouts.delete(id);
+      window.clearTimeout(id);
+    },
+    clearInterval(id) {
+      if (id == null) return;
+      intervals.delete(id);
+      window.clearInterval(id);
+    },
+    cancelAnimationFrame(id) {
+      if (id == null) return;
+      frames.delete(id);
+      window.cancelAnimationFrame(id);
+    },
+    cancelAll() {
+      timeouts.forEach(id => window.clearTimeout(id));
+      intervals.forEach(id => window.clearInterval(id));
+      frames.forEach(id => window.cancelAnimationFrame(id));
+      timeouts.clear();
+      intervals.clear();
+      frames.clear();
+    }
+  };
+};
+
+/* ------------------------------------------------------------------ *
+ * Pure race engine (audit items 7 & 8).
+ *
+ * Winner contract: the winner is preselected before the race starts and
+ * is guaranteed to cross the finish line first. Two mechanisms enforce
+ * it, in order:
+ *   1. Soft — the winner keeps pace with the field and gets a closing
+ *      surge over the last stretch, so it usually leads on merit and
+ *      the race reads naturally.
+ *   2. Hard — non-winners are clamped just short of the line until the
+ *      selected winner has crossed. This is the airtight guarantee that
+ *      random bursts and catch-up multipliers can never break.
+ *
+ * `advanceRace` is pure w.r.t. the DOM: it only mutates the race state
+ * it is handed and takes its randomness from the injected `rng`, so it
+ * is deterministic under test.
+ * ------------------------------------------------------------------ */
+const RACE_ENGINE = {
+  BASE_SPEED: 5 / 3,
+  CATCHUP_GAP_RATIO: 0.3,
+  // Winner keeps pace with the quicker half of the field...
+  WINNER_PACE: 1.25,
+  // ...then surges over the closing stretch.
+  WINNER_SURGE_FROM: 0.6,
+  WINNER_SURGE: 1.35,
+  // How far short of the line a non-winner is held while the winner runs.
+  HOLD_BACK_PX: 12
+};
+
+const advanceRace = (race, rng) => {
+  const { participants, finishLine, speedSetting } = race;
+  const raceFactor = 1 - speedSetting / 100;
+  const speedScale = 1 - raceFactor * 0.8;
+
+  // Leader is computed once per tick rather than once per participant.
+  let leaderX = -Infinity;
+  for (let i = 0; i < participants.length; i++) {
+    if (participants[i].x > leaderX) leaderX = participants[i].x;
+  }
+
+  const winnerFinished = participants.some(p => p.winning && p.finished);
+  const newlyFinished = [];
+
+  for (let i = 0; i < participants.length; i++) {
+    const participant = participants[i];
+    if (participant.finished) continue;
+
+    let maxSpeed = RACE_ENGINE.BASE_SPEED;
+
+    if (participant.winning) {
+      maxSpeed *= RACE_ENGINE.WINNER_PACE * (1.05 + rng() * 0.1);
+      if (participant.x / finishLine > RACE_ENGINE.WINNER_SURGE_FROM) maxSpeed *= RACE_ENGINE.WINNER_SURGE;
+    } else {
+      maxSpeed *= participant.baseSpeed;
+      if (rng() < 0.05) maxSpeed *= 1.5;
+      if (leaderX - participant.x > finishLine * RACE_ENGINE.CATCHUP_GAP_RATIO) maxSpeed *= 1.2;
+    }
+
+    maxSpeed *= speedScale;
+    participant.x += maxSpeed * (0.8 + rng() * 0.4);
+
+    // Winner contract: nobody may cross before the selected winner does.
+    if (!participant.winning && !winnerFinished) {
+      const ceiling = finishLine - RACE_ENGINE.HOLD_BACK_PX;
+      if (participant.x > ceiling) participant.x = ceiling;
+    }
+
+    if (participant.x >= finishLine) {
+      participant.x = finishLine;
+      participant.finished = true;
+      newlyFinished.push(participant);
+    }
+  }
+
+  // Stable finish ordering for racers crossing on the same tick.
+  newlyFinished.sort((a, b) => (a.winning === b.winning ? 0 : a.winning ? -1 : 1));
+  newlyFinished.forEach(participant => {
+    if (!race.finishOrder.includes(participant.laneIndex)) {
+      race.finishOrder.push(participant.laneIndex);
+    }
+  });
+
+  race.allFinished = participants.every(p => p.finished);
+
+  return { newlyFinished, allFinished: race.allFinished };
+};
+
+const rankParticipants = (race) => {
+  const finished = race.finishOrder.map(index => race.participants[index]);
+  const running = race.participants.filter(p => !p.finished).sort((a, b) => b.x - a.x);
+  return [...finished, ...running];
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   fetchBuildInfo();
 
@@ -70,17 +220,29 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsContainer: document.getElementById("resultsContainer"),
     raceTrackContainer: document.getElementById("raceTrackContainer"),
     raceLanes: document.getElementById("raceLanes"),
-    countdownOverlay: document.getElementById("countdownOverlay")
+    countdownOverlay: document.getElementById("countdownOverlay"),
+    countdownDisplay: document.querySelector("#countdownOverlay .countdown-display"),
+    raceStatus: document.getElementById("raceStatus")
   };
+
+  const timers = createTimerController();
+
+  // Race phases (audit item 9): idle -> countdown -> running -> finished
+  const PHASE = { IDLE: "idle", COUNTDOWN: "countdown", RUNNING: "running", FINISHED: "finished" };
 
   // Race state
   const state = {
+    phase: PHASE.IDLE,
     participants: [],
-    raceInProgress: false,
+    nodes: [],
     selectedWinner: 0,
     countdown: 3,
+    finishLine: 0,
+    speedSetting: 70,
+    finishOrder: [],
+    allFinished: false,
     raceInterval: null,
-    finishOrder: []
+    history: []
   };
 
   // Constants
@@ -89,10 +251,19 @@ document.addEventListener("DOMContentLoaded", () => {
     finishLine: () => elements.raceTrackContainer.clientWidth - CONFIG.FINISH_LINE_OFFSET,
     MAX_PARTICIPANTS: 20,
     FRAME_MS: 48,
-    BASE_SPEED: 5 / 3,
     LANE_PADDING: 80,
     RACER_HALF_HEIGHT: 25,
-    CATCHUP_GAP_RATIO: 0.3
+    START_X: 20,
+    HISTORY_LIMIT: 50,
+    HISTORY_VERSION: 1,
+    IDLE_TRACK_BACKGROUND: "linear-gradient(135deg, #f8fafc, #e2e8f0)",
+    RACING_TRACK_BACKGROUND: `repeating-linear-gradient(
+      90deg,
+      #ffffff 0px,
+      #ffffff 20px,
+      #1f2937 20px,
+      #1f2937 40px
+    )`
   };
 
   const DATA = {
@@ -105,13 +276,54 @@ document.addEventListener("DOMContentLoaded", () => {
     colorPalette: ["#FFB3BA", "#BAFFC9", "#BAE1FF", "#FFFFBA", "#FFD1FF", "#FFDFBA", "#C9BAFF", "#BAFFFF", "#F0BAFF", "#BAFFE0"]
   };
 
+  const SPEED_LABELS = ["Slow", "Medium", "Fast", "Super Fast"];
+
+  /* ---------------- Phase-driven UI rendering (audit item 9) ------- */
+
+  const announce = (message) => {
+    if (elements.raceStatus) elements.raceStatus.textContent = message;
+  };
+
+  const renderPhase = () => {
+    const busy = state.phase === PHASE.COUNTDOWN || state.phase === PHASE.RUNNING;
+
+    elements.startRaceBtn.disabled = busy;
+    elements.speedControl.disabled = busy;
+    elements.nameInput.disabled = busy;
+
+    const showCountdown = state.phase === PHASE.COUNTDOWN;
+    elements.countdownOverlay.classList.toggle("hidden", !showCountdown);
+    elements.countdownOverlay.style.display = showCountdown ? "flex" : "none";
+
+    const showWinner = state.phase === PHASE.FINISHED;
+    elements.winnerDisplay.classList.toggle("hidden", !showWinner);
+    elements.winnerDisplay.classList.toggle("show", showWinner);
+    elements.winnerDisplay.style.display = showWinner ? "block" : "none";
+
+    elements.raceTrackContainer.style.background =
+      state.phase === PHASE.RUNNING ? CONFIG.RACING_TRACK_BACKGROUND : CONFIG.IDLE_TRACK_BACKGROUND;
+  };
+
+  const setPhase = (phase) => {
+    state.phase = phase;
+    renderPhase();
+  };
+
+  /* ---------------- Form rendering (audit item 14) ----------------- */
+
+  const renderSpeedValue = () => {
+    const value = Number(elements.speedControl.value);
+    state.speedSetting = value;
+    elements.speedValue.textContent = SPEED_LABELS[Math.min(Math.floor(value / 25), SPEED_LABELS.length - 1)];
+  };
+
+  const renderNames = (value) => {
+    elements.nameInput.value = value == null ? "" : String(value);
+  };
+
   const initSpeedControl = () => {
-    elements.speedControl.addEventListener("input", () => {
-      const value = elements.speedControl.value;
-      const labels = ["Slow", "Medium", "Fast", "Super Fast"];
-      const index = Math.min(Math.floor(value / 25), 3);
-      elements.speedValue.textContent = labels[index];
-    });
+    elements.speedControl.addEventListener("input", renderSpeedValue);
+    renderSpeedValue();
   };
 
   const parseNames = () => {
@@ -120,8 +332,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return rawInput.split("\n").map(name => name.trim()).filter(name => name.length > 0);
   };
 
+  /* ---------------- Participant setup ------------------------------ */
+
   const initializeParticipants = (names) => {
     state.participants = [];
+    state.nodes = [];
     elements.raceLanes.innerHTML = "";
     state.selectedWinner = Math.floor(Math.random() * names.length);
     const laneHeight = calculateLaneHeight(names.length);
@@ -138,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const character = availableCharacters[index % availableCharacters.length];
 
       const participant = {
-        name, color, emoji: character.emoji, x: 20,
+        name, color, emoji: character.emoji, x: CONFIG.START_X,
         y: index * laneHeight + laneHeight / 2, speed: 0,
         baseSpeed: 1 + Math.random() * 0.5, finished: false,
         winning: index === state.selectedWinner,
@@ -152,9 +367,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.querySelectorAll(".background-element").forEach(el => el.remove());
+    state.finishLine = CONFIG.finishLine();
+    renderRacers();
     updateTethersAndNames();
   };
 
+  // Cache DOM references at initialization (audit item 13).
   const createLaneElement = (laneHeight, index, name, color, emoji) => {
     const lane = document.createElement("div");
     lane.className = "race-lane";
@@ -164,30 +382,36 @@ document.addEventListener("DOMContentLoaded", () => {
     racer.className = "racer";
     racer.id = `racer-${index}`;
     racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
+    // `.racer` is the positioned element, so it is what we animate.
+    racer.style.transform = `translateX(${CONFIG.START_X}px) translateZ(0)`;
 
     const animalContainer = document.createElement("div");
     animalContainer.className = "car-container";
-    animalContainer.style.left = "20px";
 
     const animal = document.createElement("div");
     animal.className = "racer-animal";
     animal.textContent = emoji;
     animal.style.color = color;
+    animal.style.fontSize = "34px";
+    animal.style.lineHeight = "1";
 
     const tether = document.createElement("div");
     tether.className = "tether";
     tether.id = `tether-${index}`;
+    tether.style.cssText = "position: absolute; height: 2px; background-color: rgba(31,41,55,0.35); z-index: 5;";
 
     const nameLabel = document.createElement("div");
     nameLabel.className = "racer-name";
     nameLabel.id = `name-${index}`;
     nameLabel.textContent = name;
-    nameLabel.style.cssText = "left: -40px;";
+    nameLabel.style.cssText = "position: absolute; top: 4px; left: -40px; white-space: nowrap; z-index: 15;";
 
     animalContainer.appendChild(animal);
     racer.appendChild(animalContainer);
     lane.append(racer, tether, nameLabel);
-    
+
+    state.nodes.push({ lane, racer, animalContainer, animal, tether, nameLabel, placeLabel: null });
+
     return lane;
   };
 
@@ -198,22 +422,24 @@ document.addEventListener("DOMContentLoaded", () => {
     return (optimalHeight - CONFIG.LANE_PADDING) / participantCount;
   };
 
-
-  const createDust = (racerId) => {
-    const racer = document.getElementById(`racer-${racerId}`);
-    const animalContainer = racer?.querySelector(".car-container");
-    if (!animalContainer) return;
+  const createDust = (racerIndex) => {
+    const nodes = state.nodes[racerIndex];
+    if (!nodes) return;
 
     const dust = document.createElement("div");
     dust.className = "running-dust";
 
-    const animalRect = animalContainer.getBoundingClientRect();
+    const animalRect = nodes.animalContainer.getBoundingClientRect();
     const containerRect = elements.raceTrackContainer.getBoundingClientRect();
 
     const size = 3 + Math.random() * 7;
     const opacity = 0.3 + Math.random() * 0.3;
 
     dust.style.cssText = `
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 4;
       left: ${animalRect.left - containerRect.left - 10 + Math.random() * 4}px;
       top: ${animalRect.top - containerRect.top + animalRect.height / 2 + 5}px;
       width: ${size}px; height: ${size}px;
@@ -223,57 +449,121 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elements.raceTrackContainer.appendChild(dust);
 
-    setTimeout(() => {
+    timers.setTimeout(() => {
       dust.style.transform = `translate(-${10 + Math.random() * 15}px, -${Math.random() * 10}px) scale(${1 + Math.random()})`;
       dust.style.opacity = "0";
     }, 10);
 
-    setTimeout(() => dust.remove(), 350);
+    timers.setTimeout(() => dust.remove(), 350);
   };
 
   const updateTethersAndNames = () => {
+    const racing = state.phase === PHASE.RUNNING;
+
     state.participants.forEach((participant, index) => {
-      const animalContainer = document.querySelector(`#racer-${index} .car-container`);
-      const nameLabel = document.getElementById(`name-${index}`);
-      const tether = document.getElementById(`tether-${index}`);
+      const nodes = state.nodes[index];
+      if (!nodes) return;
 
-      if (!animalContainer || !nameLabel || !tether) return;
-
-      const animalRect = animalContainer.getBoundingClientRect();
-      const animalCenterY = animalRect.top + animalRect.height / 2;
-      const laneRect = document.querySelectorAll(".race-lane")[index].getBoundingClientRect();
+      const { nameLabel, tether } = nodes;
+      const laneHeight = nodes.lane.clientHeight;
+      const centerY = laneHeight / 2;
 
       if (participant.finished) {
-        const finishLine = CONFIG.finishLine();
+        const finishLine = state.finishLine;
         const nameX = finishLine - 80;
-        const nameWidth = nameLabel.getBoundingClientRect().width;
+        const nameWidth = nameLabel.offsetWidth;
         const tetherStartX = nameX + nameWidth;
         const tetherLength = Math.max(5, finishLine - tetherStartX);
 
         nameLabel.style.left = `${nameX}px`;
-        tether.style.cssText = `left: ${tetherStartX}px; top: ${animalCenterY - laneRect.top}px; width: ${tetherLength}px`;
-      } else if (!state.raceInProgress && participant.x <= 20) {
-        nameLabel.style.left = `-40px`;
-        tether.style.cssText = `left: 0px; top: ${animalCenterY - laneRect.top}px; width: 10px`;
+        tether.style.left = `${tetherStartX}px`;
+        tether.style.top = `${centerY}px`;
+        tether.style.width = `${tetherLength}px`;
+        tether.style.opacity = "1";
+      } else if (!racing && participant.x <= CONFIG.START_X) {
+        nameLabel.style.left = "-40px";
+        tether.style.left = "0px";
+        tether.style.top = `${centerY}px`;
+        tether.style.width = "10px";
+        tether.style.opacity = "1";
       } else {
         // Make name follow with the icon, positioned to the left for readability
-        const nameWidth = nameLabel.getBoundingClientRect().width;
+        const nameWidth = nameLabel.offsetWidth;
         const nameX = participant.x - nameWidth - 10; // Position name to the left of icon with 10px gap
 
         nameLabel.style.left = `${Math.max(5, nameX)}px`; // Ensure minimum 5px from left edge
         // Hide tether during race to keep it clean
-        tether.style.cssText = `left: 0px; top: ${animalCenterY - laneRect.top}px; width: 0px; opacity: 0;`;
+        tether.style.left = "0px";
+        tether.style.top = `${centerY}px`;
+        tether.style.width = "0px";
+        tether.style.opacity = "0";
       }
     });
   };
 
-  const animateRace = () => {
-    const allFinished = state.participants.every(p => p.finished);
-    if (allFinished && state.finishOrder.length > 0) {
-      clearInterval(state.raceInterval);
-      state.raceInterval = null;
-      state.raceInProgress = false;
+  /* ---------------- Rendering the race ----------------------------- */
 
+  const renderRacers = () => {
+    for (let i = 0; i < state.participants.length; i++) {
+      const nodes = state.nodes[i];
+      if (!nodes) continue;
+      nodes.racer.style.transform = `translateX(${state.participants[i].x}px) translateZ(0)`;
+    }
+  };
+
+  const renderPlaces = () => {
+    const ranked = rankParticipants(state);
+
+    for (let place = 0; place < ranked.length; place++) {
+      const participant = ranked[place];
+      const nodes = state.nodes[participant.laneIndex];
+      if (!nodes) continue;
+
+      const color = (place === 0 && !participant.finished) ? "#22c55e" : participant.color;
+      if (nodes.animal && nodes.animal.style.color !== color) nodes.animal.style.color = color;
+
+      if (!nodes.placeLabel) {
+        nodes.placeLabel = document.createElement("div");
+        nodes.placeLabel.className = "place-label";
+        nodes.racer.appendChild(nodes.placeLabel);
+      }
+      const label = `${place + 1}${getOrdinalSuffix(place + 1)}`;
+      if (nodes.placeLabel.textContent !== label) nodes.placeLabel.textContent = label;
+    }
+  };
+
+  const raceTick = () => {
+    if (state.phase !== PHASE.RUNNING) return;
+
+    const { newlyFinished, allFinished } = advanceRace(state, Math.random);
+
+    newlyFinished.forEach(participant => {
+      const nodes = state.nodes[participant.laneIndex];
+      if (!nodes) return;
+      nodes.racer.classList.remove("running");
+      if (state.finishOrder[0] === participant.laneIndex) nodes.racer.classList.add("winner");
+    });
+
+    renderRacers();
+    renderPlaces();
+
+    for (let i = 0; i < state.participants.length; i++) {
+      if (state.participants[i].finished) continue;
+      const nodes = state.nodes[i];
+      if (nodes && !nodes.racer.classList.contains("running")) nodes.racer.classList.add("running");
+      if (Math.random() < 0.1) createDust(i);
+    }
+
+    updateTethersAndNames();
+
+    if (allFinished && state.finishOrder.length > 0) finishRace();
+  };
+
+  const finishRace = () => {
+    timers.clearInterval(state.raceInterval);
+    state.raceInterval = null;
+
+    try {
       const winner = state.participants[state.finishOrder[0]];
       const lastPlace = state.participants[state.finishOrder[state.finishOrder.length - 1]];
 
@@ -289,125 +579,46 @@ document.addEventListener("DOMContentLoaded", () => {
 
       elements.winnerDisplay.innerHTML = "";
       elements.winnerDisplay.appendChild(resultDisplay);
-      elements.winnerDisplay.style.display = "block";
-      elements.winnerDisplay.classList.add("show");
 
-      addResultToHistory(winner.name, winner.color, winner.emoji, new Date().toLocaleString());
+      announce(`Race finished. Winner: ${winner.name}.`);
 
-      setTimeout(() => {
-        setControlsDisabled(false);
-        playCelebrationEffect();
-      }, 500);
-
-      return;
+      addResultToHistory({
+        participant: winner.name,
+        color: winner.color,
+        character: winner.emoji,
+        timestamp: new Date().toLocaleString()
+      });
+    } catch (error) {
+      console.error("Error finishing race:", error);
+    } finally {
+      // Controls must always come back, whatever went wrong above (item 6).
+      setPhase(PHASE.FINISHED);
+      timers.setTimeout(playCelebrationEffect, 500);
     }
-
-    const sortedFinished = state.finishOrder.map(index => state.participants[index]);
-    const runningParticipants = state.participants.filter(p => !p.finished);
-    const sortedRunning = [...runningParticipants].sort((a, b) => b.x - a.x);
-    const sortedByPosition = [...sortedFinished, ...sortedRunning];
-
-    sortedByPosition.forEach((participant, place) => {
-      const racer = document.getElementById(`racer-${participant.laneIndex}`);
-      if (!racer) return;
-
-      // Update racer color based on position
-      const animalElement = racer.querySelector(".racer-animal");
-      if (animalElement) {
-        if (place === 0 && !participant.finished) {
-          // Current leader gets bright green
-          animalElement.style.color = "#22c55e";
-        } else {
-          // Others keep their original pastel color
-          animalElement.style.color = participant.color;
-        }
-      }
-
-      let placeLabel = racer.querySelector(".place-label");
-      if (!placeLabel) {
-        placeLabel = document.createElement("div");
-        placeLabel.className = "place-label";
-        racer.appendChild(placeLabel);
-      }
-      placeLabel.textContent = `${place + 1}${getOrdinalSuffix(place + 1)}`;
-    });
-
-    const raceFactor = 1 - elements.speedControl.value / 100;
-
-    state.participants.forEach((participant, index) => {
-      if (participant.finished) return;
-
-      const racer = document.getElementById(`racer-${index}`);
-      if (!racer) return;
-
-      racer.classList.add("running");
-
-      const finishLine = CONFIG.finishLine();
-      let maxSpeed = CONFIG.BASE_SPEED;
-
-      if (participant.winning) {
-        maxSpeed *= (1.05 + Math.random() * 0.1);
-        if (participant.x / finishLine > 0.7) maxSpeed *= 1.1;
-      } else {
-        maxSpeed *= participant.baseSpeed;
-        if (Math.random() < 0.05) maxSpeed *= 1.5;
-
-        const leader = state.participants.reduce((prev, curr) => prev.x > curr.x ? prev : curr);
-        if (leader.x - participant.x > finishLine * CONFIG.CATCHUP_GAP_RATIO) maxSpeed *= 1.2;
-      }
-
-      maxSpeed *= (1 - raceFactor * 0.8);
-      participant.x += maxSpeed * (0.8 + Math.random() * 0.4);
-
-      const animalContainer = racer.querySelector(".car-container");
-      if (animalContainer) animalContainer.style.left = `${participant.x}px`;
-
-      if (Math.random() < 0.1) createDust(index);
-
-      if (participant.x >= finishLine) {
-        participant.finished = true;
-        participant.x = finishLine;
-        if (animalContainer) animalContainer.style.left = `${finishLine}px`;
-        racer.classList.remove("running");
-
-        if (!state.finishOrder.includes(participant.laneIndex)) {
-          state.finishOrder.push(participant.laneIndex);
-
-          if (state.finishOrder.length === 1) {
-            participant.winning = true;
-            racer.classList.add("winner");
-          }
-        }
-      }
-    });
-
-    updateTethersAndNames();
-  };
-
-  const setControlsDisabled = (disabled) => {
-    elements.startRaceBtn.disabled = disabled;
-    elements.speedControl.disabled = disabled;
-    elements.nameInput.disabled = disabled;
   };
 
   const clearRaceDebris = () => {
     document.querySelectorAll(".running-dust").forEach(dust => dust.remove());
-    document.querySelectorAll(".race-lane").forEach(lane => {
-      lane.querySelectorAll(".place-label").forEach(label => label.remove());
+    state.nodes.forEach(nodes => {
+      if (nodes.placeLabel) {
+        nodes.placeLabel.remove();
+        nodes.placeLabel = null;
+      }
+      nodes.racer.classList.remove("running", "winner");
     });
   };
 
+  /* ---------------- Race lifecycle --------------------------------- */
+
   const startRace = () => {
     try {
-      if (state.raceInterval) {
-        clearInterval(state.raceInterval);
-        state.raceInterval = null;
-      }
+      timers.cancelAll();
+      state.raceInterval = null;
 
       clearRaceDebris();
 
       if (!elements.nameInput.value.trim()) {
-        elements.nameInput.value = DATA.sampleNames.join("\n");
+        renderNames(DATA.sampleNames.join("\n"));
       }
 
       const names = parseNames();
@@ -422,18 +633,15 @@ document.addEventListener("DOMContentLoaded", () => {
         names.splice(CONFIG.MAX_PARTICIPANTS);
       }
 
-      state.raceInProgress = true;
-      setControlsDisabled(true);
-      elements.winnerDisplay.style.display = "none";
-      elements.winnerDisplay.classList.remove("show");
-
       saveNames();
       state.finishOrder = [];
       state.participants = [];
+      state.allFinished = false;
 
       initializeParticipants(names);
 
       state.countdown = 3;
+      setPhase(PHASE.COUNTDOWN);
       countdownDisplay();
     } catch (error) {
       console.error("Error starting race:", error);
@@ -443,33 +651,54 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const countdownDisplay = () => {
-    elements.countdownOverlay.style.display = "flex";
+    if (state.phase !== PHASE.COUNTDOWN) return;
+
+    // Update the countdown child element, never the overlay itself (item 12).
+    const target = elements.countdownDisplay || elements.countdownOverlay;
 
     if (state.countdown > 0) {
-      elements.countdownOverlay.textContent = state.countdown;
+      target.textContent = String(state.countdown);
+      announce(`Race starting in ${state.countdown}`);
       state.countdown--;
-      setTimeout(countdownDisplay, 1000);
+      timers.setTimeout(countdownDisplay, 1000);
     } else {
-      elements.countdownOverlay.textContent = "GO!";
-      setTimeout(() => {
-        elements.countdownOverlay.style.display = "none";
-        // Add racing stripes when race starts
-        elements.raceTrackContainer.style.background = `repeating-linear-gradient(
-          90deg,
-          #ffffff 0px,
-          #ffffff 20px,
-          #1f2937 20px,
-          #1f2937 40px
-        )`;
-        state.raceInterval = setInterval(animateRace, CONFIG.FRAME_MS);
-      }, 1000);
+      target.textContent = "GO!";
+      announce("Go!");
+      timers.setTimeout(beginRacing, 1000);
     }
   };
 
+  const beginRacing = () => {
+    if (state.phase !== PHASE.COUNTDOWN) return;
+    state.finishLine = CONFIG.finishLine();
+    state.speedSetting = Number(elements.speedControl.value);
+    setPhase(PHASE.RUNNING);
+    state.raceInterval = timers.setInterval(raceTick, CONFIG.FRAME_MS);
+  };
+
+  const cleanupRace = () => {
+    timers.cancelAll();
+    state.raceInterval = null;
+
+    state.finishOrder = [];
+    state.allFinished = false;
+    state.participants.forEach(p => {
+      p.finished = false;
+      p.x = CONFIG.START_X;
+    });
+
+    clearRaceDebris();
+    renderRacers();
+    setPhase(PHASE.IDLE);
+    updateTethersAndNames();
+    announce("Race reset.");
+  };
+
+  /* ---------------- Celebration ------------------------------------ */
 
   const playCelebrationEffect = () => {
     for (let i = 0; i < 50; i++) {
-      setTimeout(createConfetti, i * 50);
+      timers.setTimeout(createConfetti, i * 50);
     }
   };
 
@@ -477,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const confetti = document.createElement("div");
     const size = Math.random() * 10 + 5;
     const color = DATA.colorPalette[Math.floor(Math.random() * DATA.colorPalette.length)];
-    
+
     const rect = elements.winnerDisplay.getBoundingClientRect();
     const winX = rect.left + rect.width / 2;
     const winY = rect.top + rect.height / 2;
@@ -501,123 +730,151 @@ document.addEventListener("DOMContentLoaded", () => {
       opacity ${fallDuration * 0.5}ms ease-in ${fallDuration * 0.5 + fallDelay}ms
     `;
 
-    setTimeout(() => {
+    timers.setTimeout(() => {
       confetti.style.top = `${winY + 300 + Math.random() * 100}px`;
       confetti.style.left = `${startX + (Math.random() * 200 - 100)}px`;
       confetti.style.opacity = "0";
-      setTimeout(() => confetti.remove(), fallDuration + fallDelay);
+      timers.setTimeout(() => confetti.remove(), fallDuration + fallDelay);
     }, 10);
   };
 
-  const addResultToHistory = (participantName, color, emoji, timestamp, save = true) => {
-    if (!elements.resultsContainer) return;
+  /* ---------------- History (audit items 6 & 11) -------------------- */
 
-    const resultsSection = document.querySelector(".results-section");
-    if (resultsSection) resultsSection.style.display = "block";
-
-    const resultElement = document.createElement("div");
-    resultElement.className = "result-item";
-
-    const displayEmoji = emoji || "🏃";
-
-    resultElement.innerHTML = `
-      <div class="result-color" style="background-color: ${escapeHtml(color)}">${escapeHtml(displayEmoji)}</div>
-      <div class="result-info">
-        <div class="result-winner">🏆 ${escapeHtml(participantName || "Unknown Racer")}</div>
-        <div class="result-time">${escapeHtml(timestamp)}</div>
-      </div>
-    `;
-
-    elements.resultsContainer.insertBefore(resultElement, elements.resultsContainer.firstChild);
-    resultElement.offsetHeight;
-    resultElement.classList.add("visible");
-
-    if (save) saveRaceResult(participantName, color, emoji);
+  const normaliseHistoryEntry = (entry) => {
+    if (!entry || typeof entry !== "object") return null;
+    return {
+      participant: typeof entry.participant === "string" && entry.participant ? entry.participant : "Unknown Racer",
+      color: typeof entry.color === "string" && entry.color ? entry.color : "#4f46e5",
+      character: typeof entry.character === "string" && entry.character ? entry.character : "🏃",
+      timestamp: typeof entry.timestamp === "string" && entry.timestamp ? entry.timestamp : new Date().toLocaleString()
+    };
   };
 
-  const cleanupRace = () => {
-    if (state.raceInterval) {
-      clearInterval(state.raceInterval);
-      state.raceInterval = null;
+  const readStorage = (key) => {
+    try {
+      return window.localStorage ? window.localStorage.getItem(key) : null;
+    } catch (error) {
+      console.warn(`Unable to read "${key}" from storage:`, error);
+      return null;
+    }
+  };
+
+  const writeStorage = (key, value) => {
+    try {
+      if (window.localStorage) window.localStorage.setItem(key, value);
+    } catch (error) {
+      console.warn(`Unable to write "${key}" to storage:`, error);
+    }
+  };
+
+  const removeStorage = (key) => {
+    try {
+      if (window.localStorage) window.localStorage.removeItem(key);
+    } catch (error) {
+      console.warn(`Unable to remove "${key}" from storage:`, error);
+    }
+  };
+
+  const parseHistory = (raw) => {
+    if (!raw) return [];
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      console.error("Error parsing saved results:", error);
+      return [];
     }
 
-    state.raceInProgress = false;
-    setControlsDisabled(false);
-    elements.winnerDisplay.style.display = "none";
-    elements.winnerDisplay.classList.remove("show");
-    elements.countdownOverlay.style.display = "none";
+    // Tolerate both the legacy bare array and the versioned envelope.
+    const entries = Array.isArray(parsed)
+      ? parsed
+      : (parsed && typeof parsed === "object" && Array.isArray(parsed.entries) ? parsed.entries : []);
 
-    // Restore neutral background when race ends
-    elements.raceTrackContainer.style.background = "linear-gradient(135deg, #f8fafc, #e2e8f0)";
+    return entries
+      .map(normaliseHistoryEntry)
+      .filter(entry => entry !== null)
+      .slice(-CONFIG.HISTORY_LIMIT);
+  };
 
-    state.finishOrder = [];
+  const persistHistory = () => {
+    writeStorage("raceResults", JSON.stringify({
+      version: CONFIG.HISTORY_VERSION,
+      entries: state.history
+    }));
+  };
 
-    clearRaceDebris();
+  // Renders either the result list or exactly one empty state (item 11).
+  const renderHistory = () => {
+    if (!elements.resultsContainer) return;
+
+    elements.resultsContainer.innerHTML = "";
+
+    if (state.history.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "text-center text-secondary-400 py-8";
+      empty.innerHTML = `
+        <i class="fas fa-trophy text-4xl mb-3 opacity-50"></i>
+        <p class="text-sm">No races completed yet. Start your first race!</p>
+      `;
+      elements.resultsContainer.appendChild(empty);
+      return;
+    }
+
+    // Newest first.
+    for (let i = state.history.length - 1; i >= 0; i--) {
+      const entry = state.history[i];
+      const resultElement = document.createElement("div");
+      resultElement.className = "result-item visible";
+      resultElement.innerHTML = `
+        <div class="result-color" style="background-color: ${escapeHtml(entry.color)}">${escapeHtml(entry.character)}</div>
+        <div class="result-info">
+          <div class="result-winner">🏆 ${escapeHtml(entry.participant)}</div>
+          <div class="result-time">${escapeHtml(entry.timestamp)}</div>
+        </div>
+      `;
+      elements.resultsContainer.appendChild(resultElement);
+    }
+  };
+
+  const addResultToHistory = (entry) => {
+    const normalised = normaliseHistoryEntry(entry);
+    if (!normalised) return;
+
+    state.history.push(normalised);
+    if (state.history.length > CONFIG.HISTORY_LIMIT) {
+      state.history = state.history.slice(-CONFIG.HISTORY_LIMIT);
+    }
+
+    renderHistory();
+    persistHistory();
   };
 
   const loadSavedNames = () => {
-    const savedNames = localStorage.getItem("raceNames");
-    if (savedNames) elements.nameInput.value = savedNames;
+    const savedNames = readStorage("raceNames");
+    if (savedNames) renderNames(savedNames);
+    else renderNames("");
   };
 
   const loadRaceHistory = () => {
-    const savedResults = localStorage.getItem("raceResults");
-    if (savedResults) {
-      try {
-        const results = JSON.parse(savedResults);
-        results.forEach(result => {
-          addResultToHistory(
-            result.participant || "Unknown Racer",
-            result.color || "#4f46e5",
-            result.character || "🏃",
-            result.timestamp || new Date().toLocaleString(),
-            false
-          );
-        });
-      } catch (error) {
-        console.error("Error loading race history:", error);
-        localStorage.removeItem("raceResults");
-      }
-    }
+    state.history = parseHistory(readStorage("raceResults"));
+    renderHistory();
   };
 
-  const saveNames = () => localStorage.setItem("raceNames", elements.nameInput.value);
-
-  const saveRaceResult = (participant, color, emoji) => {
-    const result = {
-      participant: participant || "Unknown Racer",
-      color: color || "#4f46e5",
-      character: emoji || "🏃",
-      timestamp: new Date().toLocaleString()
-    };
-
-    let results = [];
-    try {
-      const savedResults = localStorage.getItem("raceResults");
-      if (savedResults) results = JSON.parse(savedResults);
-    } catch (error) {
-      console.error("Error parsing saved results:", error);
-    }
-
-    results.push(result);
-    localStorage.setItem("raceResults", JSON.stringify(results));
-    return result;
-  };
+  const saveNames = () => writeStorage("raceNames", elements.nameInput.value);
 
   const clearHistory = () => {
     if (confirm("Are you sure you want to clear all race history?")) {
-      elements.resultsContainer.innerHTML = "";
-      localStorage.removeItem("raceResults");
+      state.history = [];
+      removeStorage("raceResults");
+      renderHistory();
     }
   };
 
-  const loadDemoNames = () => {
-    elements.nameInput.value = DATA.sampleNames.join("\n");
-  };
+  const loadDemoNames = () => renderNames(DATA.sampleNames.join("\n"));
 
   // Event listeners
   elements.startRaceBtn.addEventListener("click", startRace);
-  
+
   const clearHistoryBtn = document.getElementById("clearHistory");
   if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearHistory);
 
@@ -625,38 +882,43 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loadDemoBtn) loadDemoBtn.addEventListener("click", loadDemoNames);
 
   const clearNamesBtn = document.getElementById("clearNames");
-  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => elements.nameInput.value = "");
+  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => renderNames(""));
 
   const resetRaceBtn = document.getElementById("resetRace");
   if (resetRaceBtn) resetRaceBtn.addEventListener("click", cleanupRace);
 
   const newRaceBtn = document.getElementById("newRace");
   if (newRaceBtn) newRaceBtn.addEventListener("click", () => {
-    elements.nameInput.value = "";
+    renderNames("");
     cleanupRace();
   });
 
   window.addEventListener("error", (e) => {
     console.error("Runtime error:", e.message);
-    if (state.raceInProgress) {
+    if (state.phase === PHASE.COUNTDOWN || state.phase === PHASE.RUNNING) {
       alert("An error occurred. Please refresh the page to start a new race.");
       cleanupRace();
     }
   });
 
   window.addEventListener("resize", () => {
-    if (state.participants.length > 0) {
-      const laneHeight = calculateLaneHeight(state.participants.length);
-      document.querySelectorAll(".race-lane").forEach((lane, index) => {
-        lane.style.height = `${laneHeight}px`;
-        const racer = document.getElementById(`racer-${index}`);
-        if (racer) racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
-      });
-    }
+    if (state.participants.length === 0) return;
+
+    const laneHeight = calculateLaneHeight(state.participants.length);
+    state.nodes.forEach((nodes) => {
+      nodes.lane.style.height = `${laneHeight}px`;
+      nodes.racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
+    });
+    state.finishLine = CONFIG.finishLine();
+    updateTethersAndNames();
   });
 
   // Initialize
   loadSavedNames();
   loadRaceHistory();
   initSpeedControl();
+  renderPhase();
+
+  // Exposed for automated testing of the race lifecycle.
+  window.__race = { state, PHASE, advanceRace, RACE_ENGINE };
 });

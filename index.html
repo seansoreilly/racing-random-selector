@@ -33,6 +33,20 @@
     <link rel="icon" href="public/sprites/favicon.png" type="image/png">
     
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Accessible visually-hidden helper (styles.css is generated, so this lives here). */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script defer data-domain="www.racingrandomselector.top" src="https://plausible.io/js/script.js"></script>
@@ -81,11 +95,8 @@
                             </h2>
                         </div>
                         <div class="p-4">
-                            <textarea 
-                                id="nameInput" 
-                                placeholder="Enter participant names (one per line)&#10;&#10;Example:&#10;Lightning McQueen&#10;Speed Racer&#10;Fast & Furious"
-                                class="racing-input min-h-[180px] sm:min-h-[200px] resize-none focus-racing">
-                            </textarea>
+                            <label for="nameInput" class="visually-hidden">Participant names, one per line</label>
+                            <textarea id="nameInput" placeholder="Enter participant names (one per line)&#10;&#10;Example:&#10;Lightning McQueen&#10;Speed Racer&#10;Fast & Furious" class="racing-input min-h-[180px] sm:min-h-[200px] resize-none focus-racing"></textarea>
                             <div class="mt-3 flex flex-wrap gap-2">
                                 <button id="loadDemo" class="btn-outline text-xs px-3 py-1">
                                     <i class="fas fa-magic mr-1"></i>
@@ -110,12 +121,10 @@
                         <div class="p-4 space-y-4">
                             <div class="space-y-3">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-secondary-700">Race Speed:</span>
-                                    <span id="speedValue" class="text-primary-600 font-bold text-lg px-3 py-1 bg-primary-50 rounded-full">
-                                        Slow
-                                    </span>
+                                    <label for="speedControl" class="text-sm font-medium text-secondary-700">Race Speed:</label>
+                                    <span id="speedValue" class="text-primary-600 font-bold text-lg px-3 py-1 bg-primary-50 rounded-full"></span>
                                 </div>
-                                <input type="range" id="speedControl" min="0" max="100" value="70" 
+                                <input type="range" id="speedControl" min="0" max="100" value="70" aria-describedby="speedValue"
                                        class="w-full h-3 bg-secondary-200 rounded-lg appearance-none cursor-pointer slider-thumb focus-racing">
                                 <div class="flex justify-between text-xs text-secondary-500 font-medium">
                                     <span class="flex items-center">
@@ -157,6 +166,8 @@
                             </div>
                             <div id="winner" class="mt-4 p-4 bg-gradient-to-r from-racing-yellow to-accent-400 rounded-lg text-center font-bold text-lg text-racing-black hidden winner-celebration">
                             </div>
+                            <!-- Single live region for countdown / winner announcements -->
+                            <div id="raceStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
                         </div>
                     </div>
                 </div>
@@ -194,12 +205,8 @@
                     </div>
                 </div>
                 <div class="p-4">
-                    <div id="resultsContainer" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
-                        <div class="text-center text-secondary-400 py-8">
-                            <i class="fas fa-trophy text-4xl mb-3 opacity-50"></i>
-                            <p class="text-sm">No races completed yet. Start your first race!</p>
-                        </div>
-                    </div>
+                    <!-- Contents rendered from state by script.js (results list or a single empty state) -->
+                    <div id="resultsContainer" class="space-y-3 max-h-64 overflow-y-auto custom-scrollbar"></div>
                 </div>
             </div>
         </main>
