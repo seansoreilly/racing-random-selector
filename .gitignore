@@ -3,7 +3,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 yarn.lock
 
 # Editor directories and files
@@ -31,7 +30,8 @@ coverage/
 
 # Test results
 test-results/
-e2e/
+playwright-report/
+blob-report/
 
 # Debug logs
 logs/
