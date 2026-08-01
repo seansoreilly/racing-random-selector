@@ -30,7 +30,8 @@ coverage/
 
 # Test results
 test-results/
-e2e/
+playwright-report/
+blob-report/
 
 # Debug logs
 logs/

@@ -13,7 +13,7 @@
         "deploy": "vercel --prod",
         "deploy:production": "npm run build:production && npm run deploy",
         "lint:check": "eslint script.js server.js lib/",
-        "test": "echo 'Tests passed'",
+        "test": "playwright test",
         "health": "curl -f http://localhost:8000/api/health || exit 1"
     },
     "keywords": [
