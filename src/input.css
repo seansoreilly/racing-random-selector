@@ -150,11 +150,6 @@
            backdrop-blur-sm;
   }
 
-  .racer-avatar {
-    @apply w-12 h-12 rounded-full border-2 border-white shadow-lg
-           transition-all duration-200 hover:scale-110 hover:shadow-xl;
-  }
-
   .place-label {
     position: absolute;
     right: -60px;
@@ -222,30 +217,6 @@
     @apply scale-y-100;
   }
 
-  .result-position {
-    @apply inline-flex items-center justify-center w-10 h-10 rounded-full
-           text-sm font-bold text-white mr-3 transition-all duration-200
-           hover:scale-110 shadow-md;
-  }
-
-  .result-position.first {
-    @apply bg-gradient-to-br from-racing-yellow to-yellow-600 text-racing-black
-           shadow-lg;
-    animation: winner-pulse 2s ease-in-out infinite;
-  }
-
-  .result-position.second {
-    @apply bg-gradient-to-br from-gray-300 to-gray-500 shadow-md;
-  }
-
-  .result-position.third {
-    @apply bg-gradient-to-br from-amber-400 to-amber-700 shadow-md;
-  }
-
-  .result-position.other {
-    @apply bg-gradient-to-br from-secondary-400 to-secondary-600;
-  }
-
   /* Loading and countdown displays */
   .countdown-display {
     @apply text-8xl font-bold text-white drop-shadow-2xl
@@ -254,22 +225,6 @@
   }
 
   /* Animation utilities */
-  .animate-race {
-    animation: race 3s ease-in-out forwards;
-  }
-
-  .animate-winner {
-    animation: winner 1s ease-in-out forwards;
-  }
-
-  .animate-checkered {
-    animation: checkered 0.5s ease-in-out infinite;
-  }
-
-  .animate-countdown {
-    animation: countdown 1s ease-in-out forwards;
-  }
-
   .animate-drive {
     animation: driveAnimation 0.1s ease-in-out;
   }
@@ -314,58 +269,6 @@
 @keyframes gentle-bounce {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-5px); }
-}
-
-@keyframes race {
-  0% { 
-    transform: translateX(0); 
-    filter: blur(0px);
-  }
-  20% { 
-    filter: blur(1px);
-  }
-  80% { 
-    filter: blur(1px);
-  }
-  100% { 
-    transform: translateX(100%); 
-    filter: blur(0px);
-  }
-}
-
-@keyframes winner {
-  0% { 
-    transform: scale(0.8) rotate(-5deg); 
-    opacity: 0; 
-  }
-  50% { 
-    transform: scale(1.1) rotate(2deg); 
-    opacity: 1; 
-  }
-  100% { 
-    transform: scale(1) rotate(0deg); 
-    opacity: 1; 
-  }
-}
-
-@keyframes checkered {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes countdown {
-  0% { 
-    transform: scale(1.5) rotate(15deg); 
-    opacity: 0; 
-  }
-  50% { 
-    transform: scale(1) rotate(0deg); 
-    opacity: 1; 
-  }
-  100% { 
-    transform: scale(0.8) rotate(-5deg); 
-    opacity: 0; 
-  }
 }
 
 @keyframes driveAnimation {
@@ -465,17 +368,6 @@
   0% { transform: translateX(-100%); }
   50% { transform: translateX(0%); }
   100% { transform: translateX(100%); }
-}
-
-@keyframes winner-pulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4);
-  }
-  50% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(252, 211, 77, 0);
-  }
 }
 
 @keyframes pulsePlace {
