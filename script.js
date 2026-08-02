@@ -840,7 +840,7 @@ document.addEventListener("DOMContentLoaded", () => {
       hint.className = "track-empty-state";
       hint.innerHTML = `
         <div class="text-4xl">🏁</div>
-        <p>Add names on the left — one per line — and your racers line up here.</p>
+        <p>Add participant names — one per line — and your racers line up here.</p>
       `;
       elements.raceLanes.appendChild(hint);
       return;
