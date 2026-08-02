@@ -12,7 +12,7 @@ test.describe("Race lifecycle", () => {
     await expect(page.locator("#nameInput")).not.toHaveValue("");
 
     const firstRacer = page.locator("#racer-0");
-    await expect(firstRacer).toHaveCount(0); // not created until race starts
+    await expect(firstRacer).toBeVisible(); // racers preview at the start line as soon as names exist
 
     await page.getByRole("button", { name: /start race/i }).click();
 
@@ -50,11 +50,11 @@ test.describe("Race lifecycle", () => {
     // The pre-selected winner should be the one who actually finished first.
     expect(raceInfo.actualWinnerName).toBe(raceInfo.selectedWinnerName);
 
-    const winnerDisplay = page.locator("#winner .first-place");
+    const winnerDisplay = page.locator("#winner .winner-name");
     await expect(winnerDisplay).toContainText(raceInfo.selectedWinnerName);
   });
 
-  test("reset during countdown returns to idle and no race starts afterwards", async ({ page }) => {
+  test("new race during countdown returns to idle and no race starts afterwards", async ({ page }) => {
     await page.goto("/");
 
     await page.getByRole("button", { name: /load demo/i }).click();
@@ -64,7 +64,7 @@ test.describe("Race lifecycle", () => {
       .poll(async () => page.evaluate(() => window.__race?.state?.phase), { timeout: 4_000 })
       .toBe("countdown");
 
-    await page.getByRole("button", { name: /reset/i }).click();
+    await page.getByRole("button", { name: /new race/i }).click();
 
     await expect
       .poll(async () => page.evaluate(() => window.__race?.state?.phase))

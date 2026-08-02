@@ -21,7 +21,6 @@ const fetchBuildInfo = async () => {
       buildInfo = await response.json();
       console.log("Build info loaded:", buildInfo);
       displayBuildInfo();
-      createDebugPanel();
     }
   } catch (error) {
     console.warn("Error fetching build info:", error);
@@ -44,17 +43,6 @@ const displayBuildInfo = () => {
 
   const footer = document.querySelector("footer");
   if (footer) footer.appendChild(buildInfoElement);
-};
-
-const createDebugPanel = () => {
-  if (buildInfo && !buildInfo.isProduction) {
-    const debugPanel = document.createElement("div");
-    debugPanel.className = "text-center";
-    debugPanel.innerHTML = `
-      <p class="text-sm text-gray-500">${buildInfoMarkup(buildInfo.commitHash || "unknown")}</p>
-    `;
-    document.body.appendChild(debugPanel);
-  }
 };
 
 /* ------------------------------------------------------------------ *
@@ -222,7 +210,8 @@ document.addEventListener("DOMContentLoaded", () => {
     raceLanes: document.getElementById("raceLanes"),
     countdownOverlay: document.getElementById("countdownOverlay"),
     countdownDisplay: document.querySelector("#countdownOverlay .countdown-display"),
-    raceStatus: document.getElementById("raceStatus")
+    raceStatus: document.getElementById("raceStatus"),
+    raceChip: document.getElementById("raceChip")
   };
 
   const timers = createTimerController();
@@ -247,12 +236,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Constants
   const CONFIG = {
-    FINISH_LINE_OFFSET: 150,
+    FINISH_LINE_OFFSET: 170,
     finishLine: () => elements.raceTrackContainer.clientWidth - CONFIG.FINISH_LINE_OFFSET,
     MAX_PARTICIPANTS: 20,
     FRAME_MS: 48,
-    LANE_PADDING: 80,
-    RACER_HALF_HEIGHT: 25,
+    LANE_HEIGHT: 64,
+    LANE_GAP: 8,
+    TRACK_PADDING: 40,
+    RACER_HALF_HEIGHT: 18,
     START_X: 20,
     HISTORY_LIMIT: 50,
     HISTORY_VERSION: 1,
@@ -284,8 +275,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (elements.raceStatus) elements.raceStatus.textContent = message;
   };
 
+  const CHIP_TEXT = {
+    [PHASE.IDLE]: "Ready to race",
+    [PHASE.COUNTDOWN]: "On your marks…",
+    [PHASE.RUNNING]: "Racing!",
+    [PHASE.FINISHED]: "Race complete"
+  };
+
   const renderPhase = () => {
     const busy = state.phase === PHASE.COUNTDOWN || state.phase === PHASE.RUNNING;
+
+    if (elements.raceChip) elements.raceChip.textContent = CHIP_TEXT[state.phase];
 
     elements.startRaceBtn.disabled = busy;
     elements.speedControl.disabled = busy;
@@ -369,7 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".background-element").forEach(el => el.remove());
     state.finishLine = CONFIG.finishLine();
     renderRacers();
-    updateTethersAndNames();
   };
 
   // Cache DOM references at initialization (audit item 13).
@@ -385,41 +384,36 @@ document.addEventListener("DOMContentLoaded", () => {
     // `.racer` is the positioned element, so it is what we animate.
     racer.style.transform = `translateX(${CONFIG.START_X}px) translateZ(0)`;
 
+    // Emoji + name ride together in one chip, so no tether is needed.
     const animalContainer = document.createElement("div");
-    animalContainer.className = "car-container";
+    animalContainer.className = "car-container racer-chip";
 
     const animal = document.createElement("div");
     animal.className = "racer-animal";
     animal.textContent = emoji;
     animal.style.color = color;
-    animal.style.fontSize = "34px";
+    animal.style.fontSize = "26px";
     animal.style.lineHeight = "1";
-
-    const tether = document.createElement("div");
-    tether.className = "tether";
-    tether.id = `tether-${index}`;
-    tether.style.cssText = "position: absolute; height: 2px; background-color: rgba(31,41,55,0.35); z-index: 5;";
 
     const nameLabel = document.createElement("div");
     nameLabel.className = "racer-name";
     nameLabel.id = `name-${index}`;
     nameLabel.textContent = name;
-    nameLabel.style.cssText = "position: absolute; top: 4px; left: -40px; white-space: nowrap; z-index: 15;";
 
-    animalContainer.appendChild(animal);
+    animalContainer.append(animal, nameLabel);
     racer.appendChild(animalContainer);
-    lane.append(racer, tether, nameLabel);
+    lane.appendChild(racer);
 
-    state.nodes.push({ lane, racer, animalContainer, animal, tether, nameLabel, placeLabel: null });
+    state.nodes.push({ lane, racer, animalContainer, animal, nameLabel, placeLabel: null });
 
     return lane;
   };
 
   const calculateLaneHeight = (participantCount) => {
-    const minLaneHeight = 100, padding = 100, minContainerHeight = 700;
-    const optimalHeight = Math.max(participantCount * minLaneHeight + padding, minContainerHeight);
-    elements.raceTrackContainer.style.height = `${optimalHeight}px`;
-    return (optimalHeight - CONFIG.LANE_PADDING) / participantCount;
+    const gaps = Math.max(0, participantCount - 1) * CONFIG.LANE_GAP;
+    const height = Math.max(participantCount * CONFIG.LANE_HEIGHT + gaps + CONFIG.TRACK_PADDING, 240);
+    elements.raceTrackContainer.style.height = `${height}px`;
+    return CONFIG.LANE_HEIGHT;
   };
 
   const createDust = (racerIndex) => {
@@ -457,50 +451,6 @@ document.addEventListener("DOMContentLoaded", () => {
     timers.setTimeout(() => dust.remove(), 350);
   };
 
-  const updateTethersAndNames = () => {
-    const racing = state.phase === PHASE.RUNNING;
-
-    state.participants.forEach((participant, index) => {
-      const nodes = state.nodes[index];
-      if (!nodes) return;
-
-      const { nameLabel, tether } = nodes;
-      const laneHeight = nodes.lane.clientHeight;
-      const centerY = laneHeight / 2;
-
-      if (participant.finished) {
-        const finishLine = state.finishLine;
-        const nameX = finishLine - 80;
-        const nameWidth = nameLabel.offsetWidth;
-        const tetherStartX = nameX + nameWidth;
-        const tetherLength = Math.max(5, finishLine - tetherStartX);
-
-        nameLabel.style.left = `${nameX}px`;
-        tether.style.left = `${tetherStartX}px`;
-        tether.style.top = `${centerY}px`;
-        tether.style.width = `${tetherLength}px`;
-        tether.style.opacity = "1";
-      } else if (!racing && participant.x <= CONFIG.START_X) {
-        nameLabel.style.left = "-40px";
-        tether.style.left = "0px";
-        tether.style.top = `${centerY}px`;
-        tether.style.width = "10px";
-        tether.style.opacity = "1";
-      } else {
-        // Make name follow with the icon, positioned to the left for readability
-        const nameWidth = nameLabel.offsetWidth;
-        const nameX = participant.x - nameWidth - 10; // Position name to the left of icon with 10px gap
-
-        nameLabel.style.left = `${Math.max(5, nameX)}px`; // Ensure minimum 5px from left edge
-        // Hide tether during race to keep it clean
-        tether.style.left = "0px";
-        tether.style.top = `${centerY}px`;
-        tether.style.width = "0px";
-        tether.style.opacity = "0";
-      }
-    });
-  };
-
   /* ---------------- Rendering the race ----------------------------- */
 
   const renderRacers = () => {
@@ -529,6 +479,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const label = `${place + 1}${getOrdinalSuffix(place + 1)}`;
       if (nodes.placeLabel.textContent !== label) nodes.placeLabel.textContent = label;
+      nodes.placeLabel.classList.toggle("place-label--first", place === 0);
     }
   };
 
@@ -554,8 +505,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (Math.random() < 0.1) createDust(i);
     }
 
-    updateTethersAndNames();
-
     if (allFinished && state.finishOrder.length > 0) finishRace();
   };
 
@@ -570,11 +519,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const resultDisplay = document.createElement("div");
       resultDisplay.className = "race-result-display";
       resultDisplay.innerHTML = `
-        <div class="result-header">Race Results</div>
-        <div class="position-display">
-          <div class="first-place">🥇 First: ${escapeHtml(winner.name)} ${escapeHtml(winner.emoji)}</div>
-          <div class="last-place">Last: ${escapeHtml(lastPlace.name)} ${escapeHtml(lastPlace.emoji)}</div>
-        </div>
+        <div class="result-header">🏁 Race results</div>
+        <div class="winner-name">🥇 ${escapeHtml(winner.name)} ${escapeHtml(winner.emoji)}</div>
+        <div class="last-place">Last home: ${escapeHtml(lastPlace.name)} ${escapeHtml(lastPlace.emoji)}</div>
       `;
 
       elements.winnerDisplay.innerHTML = "";
@@ -690,7 +637,6 @@ document.addEventListener("DOMContentLoaded", () => {
     clearRaceDebris();
     renderRacers();
     setPhase(PHASE.IDLE);
-    updateTethersAndNames();
     announce("Race reset.");
   };
 
@@ -813,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const empty = document.createElement("div");
       empty.className = "text-center text-secondary-400 py-8";
       empty.innerHTML = `
-        <i class="fas fa-trophy text-4xl mb-3 opacity-50"></i>
+        <div class="text-4xl mb-3 opacity-50">🏆</div>
         <p class="text-sm">No races completed yet. Start your first race!</p>
       `;
       elements.resultsContainer.appendChild(empty);
@@ -870,10 +816,63 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const loadDemoNames = () => renderNames(DATA.sampleNames.join("\n"));
+  /* ---------------- Pre-race preview ------------------------------- */
+
+  // The track always shows something: the field lined up at the start as
+  // names are typed, or a hint when the list is empty.
+  const renderPreview = () => {
+    if (state.phase !== PHASE.IDLE) return;
+
+    let names = [];
+    try {
+      names = parseNames();
+    } catch (error) {
+      names = [];
+    }
+    if (names.length > CONFIG.MAX_PARTICIPANTS) names = names.slice(0, CONFIG.MAX_PARTICIPANTS);
+
+    if (names.length === 0) {
+      state.participants = [];
+      state.nodes = [];
+      elements.raceLanes.innerHTML = "";
+      elements.raceTrackContainer.style.height = "240px";
+      const hint = document.createElement("div");
+      hint.className = "track-empty-state";
+      hint.innerHTML = `
+        <div class="text-4xl">🏁</div>
+        <p>Add names on the left — one per line — and your racers line up here.</p>
+      `;
+      elements.raceLanes.appendChild(hint);
+      return;
+    }
+
+    initializeParticipants(names);
+  };
+
+  // Edits after a finished race start a fresh setup: hide the old result,
+  // then preview the new field.
+  const previewFromControls = () => {
+    if (state.phase === PHASE.FINISHED) setPhase(PHASE.IDLE);
+    renderPreview();
+  };
+
+  const loadDemoNames = () => {
+    renderNames(DATA.sampleNames.join("\n"));
+    saveNames();
+    previewFromControls();
+  };
 
   // Event listeners
   elements.startRaceBtn.addEventListener("click", startRace);
+
+  let nameInputTimer = null;
+  elements.nameInput.addEventListener("input", () => {
+    timers.clearTimeout(nameInputTimer);
+    nameInputTimer = timers.setTimeout(() => {
+      saveNames();
+      previewFromControls();
+    }, 400);
+  });
 
   const clearHistoryBtn = document.getElementById("clearHistory");
   if (clearHistoryBtn) clearHistoryBtn.addEventListener("click", clearHistory);
@@ -882,15 +881,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (loadDemoBtn) loadDemoBtn.addEventListener("click", loadDemoNames);
 
   const clearNamesBtn = document.getElementById("clearNames");
-  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => renderNames(""));
-
-  const resetRaceBtn = document.getElementById("resetRace");
-  if (resetRaceBtn) resetRaceBtn.addEventListener("click", cleanupRace);
+  if (clearNamesBtn) clearNamesBtn.addEventListener("click", () => {
+    renderNames("");
+    saveNames();
+    previewFromControls();
+  });
 
   const newRaceBtn = document.getElementById("newRace");
   if (newRaceBtn) newRaceBtn.addEventListener("click", () => {
-    renderNames("");
     cleanupRace();
+    renderPreview();
   });
 
   window.addEventListener("error", (e) => {
@@ -910,7 +910,6 @@ document.addEventListener("DOMContentLoaded", () => {
       nodes.racer.style.top = `${laneHeight / 2 - CONFIG.RACER_HALF_HEIGHT}px`;
     });
     state.finishLine = CONFIG.finishLine();
-    updateTethersAndNames();
   });
 
   // Initialize
@@ -918,6 +917,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRaceHistory();
   initSpeedControl();
   renderPhase();
+  renderPreview();
 
   // Exposed for automated testing of the race lifecycle.
   window.__race = { state, PHASE, advanceRace, RACE_ENGINE };
