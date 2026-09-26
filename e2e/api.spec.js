@@ -52,12 +52,26 @@ test.describe("API smoke tests", () => {
     expect(res.status()).toBe(404);
   });
 
-  test("unknown non-API path falls back to index.html (SPA)", async ({ request }) => {
+  test("unknown non-API path returns a real 404 (no client-side routing exists)", async ({ request }) => {
     const res = await request.get("/some/client/route");
+    expect(res.status()).toBe(404);
+  });
+
+  test("GET /robots.txt returns 200 text with a Sitemap line", async ({ request }) => {
+    const res = await request.get("/robots.txt");
     expect(res.status()).toBe(200);
-    expect(res.headers()["content-type"]).toContain("text/html");
+    expect(res.headers()["content-type"]).toContain("text/plain");
 
     const body = await res.text();
-    expect(body).toContain('id="startRace"');
+    expect(body).toContain("Sitemap: https://www.racingrandomselector.top/sitemap.xml");
+  });
+
+  test("GET /sitemap.xml returns 200 XML", async ({ request }) => {
+    const res = await request.get("/sitemap.xml");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("xml");
+
+    const body = await res.text();
+    expect(body).toContain("<loc>https://www.racingrandomselector.top/</loc>");
   });
 });

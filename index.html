@@ -16,23 +16,48 @@
     <meta property="og:url" content="https://www.racingrandomselector.top/">
     <meta property="og:title" content="Racing Random Selector - Choose Winners Through Animated Races">
     <meta property="og:description" content="Select random winners through exciting animated races! A fun, fair, and engaging way to pick winners from any list of participants.">
-    <meta property="og:image" content="https://www.racingrandomselector.top/sprites/header.png">
-    
+    <meta property="og:image" content="https://www.racingrandomselector.top/public/sprites/header.png">
+    <meta property="og:image:width" content="1584">
+    <meta property="og:image:height" content="672">
+
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://www.racingrandomselector.top/">
     <meta property="twitter:title" content="Racing Random Selector - Choose Winners Through Animated Races">
     <meta property="twitter:description" content="Select random winners through exciting animated races! A fun, fair, and engaging way to pick winners from any list of participants.">
-    <meta property="twitter:image" content="https://www.racingrandomselector.top/public/sprites/favicon.png">
+    <meta property="twitter:image" content="https://www.racingrandomselector.top/public/sprites/header.png">
     <meta property="twitter:creator" content="@BaldDataX">
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://www.racingrandomselector.top/">
-    
+
     <!-- Favicon -->
-    <link rel="icon" href="public/sprites/favicon.png" type="image/png">
-    
-    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="/public/sprites/favicon.png" type="image/png">
+
+    <link rel="stylesheet" href="/styles.css">
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Racing Random Selector",
+      "url": "https://www.racingrandomselector.top/",
+      "description": "Select random winners through exciting animated races! A fun, fair, and engaging way to pick winners from any list of participants. Watch cute animals race to determine the champion.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Sean O'Reilly"
+      }
+    }
+    </script>
     <style>
         /* Accessible visually-hidden helper (styles.css is generated, so this lives here). */
         .visually-hidden {
@@ -68,8 +93,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <!-- Header Section -->
         <header class="animate-fade-in">
+          <h1 class="visually-hidden">Racing Random Selector - Choose Winners Through Animated Races</h1>
           <div class="header-image-container">
-            <img src="/public/sprites/header.png" alt="Racing Random Selector" class="w-full block" />
+            <picture>
+              <source srcset="/public/sprites/header.webp" type="image/webp">
+              <img src="/public/sprites/header.png" alt="Racing Random Selector" width="1584" height="672" class="w-full block" fetchpriority="high" decoding="async" />
+            </picture>
             <div class="header-url-overlay">
               www.racingrandomselector.top
             </div>

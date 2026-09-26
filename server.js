@@ -50,7 +50,7 @@ const staticOptions = {
 // Serve only the specific assets the app references, instead of exposing
 // the entire repository root via express.static(__dirname).
 app.use("/public", express.static(path.join(__dirname, "public"), staticOptions));
-["/index.html", "/script.js", "/styles.css"].forEach((route) => {
+["/index.html", "/script.js", "/styles.css", "/robots.txt", "/sitemap.xml"].forEach((route) => {
   app.use(route, express.static(path.join(__dirname, route), staticOptions));
 });
 app.get("/", (req, res) => {
@@ -73,9 +73,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Handle 404s and serve index.html for client-side routing
+// No client-side routing exists in this app (single page, no history/pushState
+// usage) — any remaining unmatched request is a real 404, not a soft-404.
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.status(404).send("Not found");
 });
 
 function createApp() {
