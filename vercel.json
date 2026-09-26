@@ -9,6 +9,8 @@
                     "index.html",
                     "script.js",
                     "styles.css",
+                    "robots.txt",
+                    "sitemap.xml",
                     "public/**"
                 ]
             }
