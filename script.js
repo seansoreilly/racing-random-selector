@@ -861,7 +861,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let names = [];
     try {
       names = parseNames();
-    } catch (error) {
+    } catch {
       names = [];
     }
     if (names.length > CONFIG.MAX_PARTICIPANTS) names = names.slice(0, CONFIG.MAX_PARTICIPANTS);
