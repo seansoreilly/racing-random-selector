@@ -77,3 +77,39 @@ test.describe("Race lifecycle", () => {
     expect(await page.evaluate(() => window.__race?.state?.raceInterval)).toBeNull();
   });
 });
+
+test.describe("Analytics", () => {
+  test("off production hostnames events are logged, never sent to GA", async ({ page }) => {
+    const logs = [];
+    page.on("console", (msg) => logs.push(msg.text()));
+
+    await page.goto("/");
+
+    const gaState = await page.evaluate(() => ({
+      dataLayer: (window.dataLayer || []).map((entry) => entry[0]),
+    }));
+    // No 'js' / 'config' commands are queued on localhost.
+    expect(gaState.dataLayer).not.toContain("config");
+
+    await page.getByRole("button", { name: /load demo/i }).click();
+    await expect.poll(() => logs.some((l) => l.includes("[Analytics Event]: load_demo_names"))).toBe(true);
+
+    const afterEvent = await page.evaluate(() => (window.dataLayer || []).map((entry) => entry[0]));
+    expect(afterEvent).not.toContain("event");
+  });
+
+  test("selection_generated is emitted when a race finishes", async ({ page }) => {
+    const logs = [];
+    page.on("console", (msg) => logs.push(msg.text()));
+
+    await page.goto("/");
+    await page.getByRole("button", { name: /load demo/i }).click();
+    await page.getByRole("button", { name: /start race/i }).click();
+
+    await expect
+      .poll(async () => page.evaluate(() => window.__race?.state?.phase), { timeout: 40_000 })
+      .toBe("finished");
+
+    expect(logs.some((l) => l.includes("[Analytics Event]: selection_generated"))).toBe(true);
+  });
+});

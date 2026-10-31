@@ -82,10 +82,12 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y2F57YEMR3"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}  
-        gtag('js', new Date());
-
-        gtag('config', 'G-Y2F57YEMR3');
+        function gtag(){dataLayer.push(arguments);}
+        // Only report production traffic; previews and localhost stay out of GA.
+        if (location.hostname === 'www.racingrandomselector.top' || location.hostname === 'racingrandomselector.top') {
+            gtag('js', new Date());
+            gtag('config', 'G-Y2F57YEMR3');
+        }
     </script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-secondary-50 to-secondary-100 font-racing text-secondary-900 antialiased">

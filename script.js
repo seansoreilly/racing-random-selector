@@ -12,6 +12,24 @@ const escapeHtml = (str) => {
   return div.innerHTML;
 };
 
+/* ---------------- Analytics (GA4) ---------------------------------
+ * Events are only sent from the production hostnames so localhost and
+ * preview deployments stay out of GA; elsewhere they are logged instead.
+ * The gtag config in index.html is gated by the same hostnames. */
+const PRODUCTION_HOSTNAMES = ["www.racingrandomselector.top", "racingrandomselector.top"];
+
+const track = (eventName, params = {}) => {
+  if (!PRODUCTION_HOSTNAMES.includes(window.location.hostname) || typeof window.gtag !== "function") {
+    console.log(`[Analytics Event]: ${eventName}`, params);
+    return;
+  }
+  try {
+    window.gtag("event", eventName, params);
+  } catch (error) {
+    console.error(`[Analytics]: Failed to track event "${eventName}":`, error);
+  }
+};
+
 let buildInfo = null;
 
 const fetchBuildInfo = async () => {
@@ -228,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
     countdown: 3,
     finishLine: 0,
     speedSetting: 70,
+    namesSource: "typed",
     finishOrder: [],
     allFinished: false,
     raceInterval: null,
@@ -311,10 +330,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ---------------- Form rendering (audit item 14) ----------------- */
 
+  const speedLabelFor = (value) => SPEED_LABELS[Math.min(Math.floor(value / 25), SPEED_LABELS.length - 1)];
+  // Low-cardinality GA param value: "slow" | "medium" | "fast" | "super_fast".
+  const speedLabel = () => speedLabelFor(state.speedSetting).toLowerCase().replace(" ", "_");
+
   const renderSpeedValue = () => {
     const value = Number(elements.speedControl.value);
     state.speedSetting = value;
-    elements.speedValue.textContent = SPEED_LABELS[Math.min(Math.floor(value / 25), SPEED_LABELS.length - 1)];
+    elements.speedValue.textContent = speedLabelFor(value);
   };
 
   const renderNames = (value) => {
@@ -535,8 +558,15 @@ document.addEventListener("DOMContentLoaded", () => {
         character: winner.emoji,
         timestamp: new Date().toLocaleString()
       });
+
+      track("selection_generated", {
+        participant_count: state.participants.length,
+        speed: speedLabel(),
+        names_source: state.namesSource
+      });
     } catch (error) {
       console.error("Error finishing race:", error);
+      track("selection_error", { error_type: "finish_failed" });
     } finally {
       // Controls must always come back, whatever went wrong above (item 6).
       setPhase(PHASE.FINISHED);
@@ -571,6 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const names = parseNames();
 
       if (names.length < 2) {
+        track("selection_error", { error_type: "too_few_names" });
         alert("Please enter at least 2 names to start the race.");
         return;
       }
@@ -579,6 +610,8 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(`Maximum ${CONFIG.MAX_PARTICIPANTS} participants allowed. Only the first ${CONFIG.MAX_PARTICIPANTS} names will be used.`);
         names.splice(CONFIG.MAX_PARTICIPANTS);
       }
+
+      state.namesSource = names.join("\n") === DATA.sampleNames.join("\n") ? "demo" : "typed";
 
       saveNames();
       state.finishOrder = [];
@@ -592,6 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
       countdownDisplay();
     } catch (error) {
       console.error("Error starting race:", error);
+      track("selection_error", { error_type: "start_failed" });
       alert("An error occurred while starting the race. Please refresh the page and try again.");
       cleanupRace();
     }
@@ -813,6 +847,7 @@ document.addEventListener("DOMContentLoaded", () => {
       state.history = [];
       removeStorage("raceResults");
       renderHistory();
+      track("clear_history");
     }
   };
 
@@ -860,6 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNames(DATA.sampleNames.join("\n"));
     saveNames();
     previewFromControls();
+    track("load_demo_names");
   };
 
   // Event listeners
@@ -885,17 +921,20 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNames("");
     saveNames();
     previewFromControls();
+    track("clear_names");
   });
 
   const newRaceBtn = document.getElementById("newRace");
   if (newRaceBtn) newRaceBtn.addEventListener("click", () => {
     cleanupRace();
     renderPreview();
+    track("new_race");
   });
 
   window.addEventListener("error", (e) => {
     console.error("Runtime error:", e.message);
     if (state.phase === PHASE.COUNTDOWN || state.phase === PHASE.RUNNING) {
+      track("selection_error", { error_type: "runtime_error" });
       alert("An error occurred. Please refresh the page to start a new race.");
       cleanupRace();
     }
