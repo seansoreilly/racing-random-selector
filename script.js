@@ -46,7 +46,7 @@ const fetchBuildInfo = async () => {
 };
 
 const buildInfoMarkup = (commitHash) =>
-  `Created by <a href="https://balddata.xyz/" target="_blank" rel="noopener noreferrer">Bald Data</a> • Build: <span class="build-hash">${escapeHtml(commitHash)}</span>`;
+  `Build: <span class="build-hash">${escapeHtml(commitHash)}</span>`;
 
 const displayBuildInfo = () => {
   if (!buildInfo) return;
