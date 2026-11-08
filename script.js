@@ -6,11 +6,20 @@ const getOrdinalSuffix = (num) => {
   return "th";
 };
 
+// textContent/innerHTML only escapes & < >, so quotes are escaped explicitly:
+// values are also interpolated into attribute values (e.g. style="...").
 const escapeHtml = (str) => {
   const div = document.createElement("div");
   div.textContent = str == null ? "" : String(str);
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
+
+const DEFAULT_COLOR = "#4f46e5";
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+// Colours come from localStorage (untrusted); only accept #rgb / #rrggbb.
+const safeColor = (value) =>
+  typeof value === "string" && HEX_COLOR_PATTERN.test(value) ? value : DEFAULT_COLOR;
 
 /* ---------------- Analytics (GA4) ---------------------------------
  * Events are only sent from the production hostnames so localhost and
@@ -724,7 +733,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!entry || typeof entry !== "object") return null;
     return {
       participant: typeof entry.participant === "string" && entry.participant ? entry.participant : "Unknown Racer",
-      color: typeof entry.color === "string" && entry.color ? entry.color : "#4f46e5",
+      color: safeColor(entry.color),
       character: typeof entry.character === "string" && entry.character ? entry.character : "🏃",
       timestamp: typeof entry.timestamp === "string" && entry.timestamp ? entry.timestamp : new Date().toLocaleString()
     };
@@ -806,7 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const resultElement = document.createElement("div");
       resultElement.className = "result-item visible";
       resultElement.innerHTML = `
-        <div class="result-color" style="background-color: ${escapeHtml(entry.color)}">${escapeHtml(entry.character)}</div>
+        <div class="result-color" style="background-color: ${escapeHtml(safeColor(entry.color))}">${escapeHtml(entry.character)}</div>
         <div class="result-info">
           <div class="result-winner">🏆 ${escapeHtml(entry.participant)}</div>
           <div class="result-time">${escapeHtml(entry.timestamp)}</div>

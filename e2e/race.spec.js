@@ -113,3 +113,31 @@ test.describe("Analytics", () => {
     expect(logs.some((l) => l.includes("[Analytics Event]: selection_generated"))).toBe(true);
   });
 });
+
+test.describe("History rendering safety", () => {
+  test("malicious colour and quote characters from localStorage cannot break out of style or add attributes", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem("raceResults", JSON.stringify({
+        version: 1,
+        entries: [
+          { participant: 'Eve" onmouseover="window.__pwned=1', color: 'red" onmouseover="window.__pwned=1" data-x="', character: "🏃", timestamp: "now" },
+          { participant: "Ok", color: "#22c55e", character: "🏃", timestamp: "now" },
+        ],
+      }));
+    });
+    await page.goto("/");
+
+    const swatches = page.locator(".result-color");
+    await expect(swatches).toHaveCount(2);
+
+    // Newest first: the valid colour is kept, the malicious one falls back.
+    await expect(swatches.nth(0)).toHaveAttribute("style", /background-color:\s*(#22c55e|rgb\(34, 197, 94\))/);
+    const evil = swatches.nth(1);
+    expect(await evil.evaluate((el) => el.getAttributeNames().sort())).toEqual(["class", "style"]);
+    await expect(evil).toHaveAttribute("style", /background-color:\s*(#4f46e5|rgb\(79, 70, 229\))/);
+
+    const winner = page.locator(".result-winner").nth(1);
+    expect(await winner.evaluate((el) => el.getAttributeNames())).toEqual(["class"]);
+    await expect(winner).toContainText('Eve" onmouseover="window.__pwned=1');
+  });
+});
