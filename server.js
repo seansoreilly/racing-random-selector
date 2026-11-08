@@ -1,8 +1,11 @@
 const express = require("express");
 const path = require("path");
 const { getBuildInfo, getPublicBuildInfo } = require("./lib/build-info");
+const { securityHeadersMiddleware } = require("./lib/security-headers");
 
 const app = express();
+app.disable("x-powered-by");
+app.use(securityHeadersMiddleware);
 const PORT = process.env.PORT || 3000;
 
 // Get build info at startup
